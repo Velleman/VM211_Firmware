@@ -1,5 +1,5 @@
 /******************************************************************************
-  EarthListener by Pieter Sijmons @ Velleman NV                           V 3.0
+  EarthListener by Pieter Sijmons @ Velleman NV                           V 3.3
   Based on examples by Adafruit, SparkFun, J. Steinlage and Tom Igoe
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
