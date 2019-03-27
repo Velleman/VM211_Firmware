@@ -1,5 +1,5 @@
 /******************************************************************************
-  EarthListener by Pieter Sijmons @ Velleman NV                           V 3.3
+  EarthListener by Pieter Sijmons @ Velleman NV
   Based on examples by Adafruit, SparkFun, J. Steinlage and Tom Igoe
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
@@ -7,7 +7,8 @@
   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
   OR OTHER DEALINGS IN THE SOFTWARE.
 
-  Special thanks to Marie-Suzanne for keeping me fed & sane while coding/debugging
+  Special thanks to Marie-Suzanne for keeping me fed & sane while coding/debugging.
+  Thanks to Brecht & Philip for their help and guidance.
   -------------------------------
   BasicReadings.ino
   by Nathan Seidle @ SparkFun Electronics  March 9th, 2018

@@ -207,6 +207,8 @@ void setup(void)
   myBME280.setReferencePressure(seaLevelPressure); //Adjust the sea level pressure used for altitude calculations. This should be a variable, not fixed!
   //If you do not set the correct sea level pressure for your location FOR THE CURRENT DAY it will not be able to calculate the altitude accurately!
   //Barometric pressure at sea level changes daily based on the weather!
+  //read value from EEPROM if Temp is in °F or °C and lightning units are in km or mi
+  MetricON = EEPROM.read(MetricON_EEPROMaddr);  //read metric or imperial state from memory. If not set, this will be true, since all EEPROM adresses are 0xFF by default
   Serial.println();
 
 

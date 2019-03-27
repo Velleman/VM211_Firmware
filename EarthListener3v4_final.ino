@@ -3,7 +3,7 @@
   Based on examples by Adafruit, SparkFun, J. Steinlage and Tom Igoe
   See tab 'info_and_refs' for more documentation
 ******************************************************************************/
-String SWversion = "v3.3";
+String SWversion = "v3.4";
 
 /***************************************/
 /* ---------- DECLARATIONS ----------- */
@@ -14,16 +14,16 @@ String SWversion = "v3.3";
 #include <EEPROM.h>                             // Library to read & store info in EEPROM long term memory
 
 /* --- Local Libraries --- */
-#include "src\Adafruit-GFX-Library\Adafruit_GFX.h"     	// Core graphics library by Adafruit
-#include "src\Adafruit-GFX-Library\Fonts\FreeSans9pt7b.h"// Font FreeSans 9pts (as an alternative for basic font)
-#include "src\AS3935_I2C_PSImod\AS3935_I2C_PSImod.h"   	// Specific lib for AS3935 sensor (mod by PSI to choose IRQ pin myself)
-#include "src\I2C\I2C.h"									                //I2C library for AS3935 lib
-#include "src\MCUFRIEND_kbv\MCUFRIEND_kbv.h"           	// TFT library by David Prentice
+#include "src\Adafruit-GFX-Library\Adafruit_GFX.h"     	  // Core graphics library by Adafruit
+#include "src\Adafruit-GFX-Library\Fonts\FreeSans9pt7b.h" // Font FreeSans 9pts (as an alternative for basic font)
+#include "src\AS3935_I2C_PSImod\AS3935_I2C_PSImod.h"   	  // Specific lib for AS3935 sensor (mod by PSI to choose IRQ pin myself)
+#include "src\I2C\I2C.h"									                // I2C library for AS3935 lib
+#include "src\MCUFRIEND_kbv\MCUFRIEND_kbv.h"           	  // TFT library by David Prentice
 #include "src\SDmega\SDmega.h"                          	// SD library (mod by PSI to work with MEGA & TFT SD card shield)
-#include "src\SparkFun_BME280\src\SparkFunBME280.h"    	// BME280 library by SparkFun
-#include "src\SparkFun_CCS811\src\SparkFunCCS811.h"    	// CCS811 library by SparkFun
-#include "src\TFTLCD-Library\Adafruit_TFTLCD.h"        	// Hardware-specific library for TFT screen by Adafruit
-#include "src\TouchScreen\TouchScreen.h"               	// TouchScreen library by Adafruit
+#include "src\SparkFun_BME280\src\SparkFunBME280.h"    	  // BME280 library by SparkFun
+#include "src\SparkFun_CCS811\src\SparkFunCCS811.h"    	  // CCS811 library by SparkFun
+#include "src\TFTLCD-Library\Adafruit_TFTLCD.h"        	  // Hardware-specific library for TFT screen by Adafruit
+#include "src\TouchScreen\TouchScreen.h"               	  // TouchScreen library by Adafruit
 #include "bitmaps.h"                            			    // Icon library (local, hence the "")
 
 
@@ -164,6 +164,11 @@ int slideshowTimer = 5;         //time (in seconds) to show each slide
 unsigned long timeStartSlide = 0;     //time when slide was first shown;
 
 
+/* --- metric / imperial switch --- */
+boolean MetricON;  //boolean to check if values of temperature and lightning distance are set in celcius/km or fahrenheit/miles => can be modified via TFT interface
+int MetricON_EEPROMaddr = 2;  // address to store this value in long term memory (EEPROM)
+
+
 /***************************************/
 /* ----------- LOOP CODE ------------ */
 /***************************************/
@@ -204,7 +209,6 @@ void loop(void)
         AMBIENTPRESSURE_BME280_c = AMBIENTPRESSURE_BME280 / 100; //convert Pa to mBar
         ALTITUDE_BME280 = myBME280.readFloatAltitudeMeters();
         TEMP_BME280 = myBME280.readTempC();
-
         //compensate temp & humi data
         TEMP_BME280 = TEMP_BME280 + TEMP_comp;
         if(HUMIDITY_BME280 <= (100 - HUMI_comp))  //make sure we don't have values > 100%

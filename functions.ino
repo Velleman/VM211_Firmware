@@ -276,7 +276,7 @@ void showScreen(int screenNr)
   {
     //tft.fillScreen(BLACK); //clear screen
     //we only have to clear part of the screen  (startX, startY, width, height, colour)
-    tft.fillRect(10,70,310,170,BLACK); 
+    tft.fillRect(10,60,310,180,BLACK); 
     //print menu buttons
     printMenuBtn();
   }
@@ -337,30 +337,41 @@ void showScreen(int screenNr)
         tft.setFont();  //standard system font
         tft.setTextSize(2);
         tft.setTextColor(GREYY,BLACK); 
-        tft.setCursor(20, 80);
+        tft.setCursor(20, 70);
         tft.print("Buzzer on/off");
-        tft.setCursor(20, 130);
+        tft.setCursor(20, 115);
         tft.print("Slideshow timer: "); tft.print(slideshowTimer); if(slideshowTimer < 10){tft.print(" ");}
-        tft.setCursor(20, 180);
+        tft.setCursor(20, 160);
         tft.print("Indoor/outdoor use");
+        tft.setCursor(20, 205);
+        tft.print("Metric/Imperial");
         //print icons (according to state)
         if(BuzzerEnabled)
         {
-          showbgd(257, 75, slider_on_44x27, 44, 27, GREYY, BLACK);
+          showbgd(257, 65, slider_on_44x27, 44, 27, GREYY, BLACK);
         }
         else
         {
-          showbgd(257, 75, slider_off_44x27, 44, 27, GREYY, BLACK);
+          showbgd(257, 65, slider_off_44x27, 44, 27, GREYY, BLACK);
         }
-        showbgd(255, 125, arrows_47x26, 47, 26, GREYY, BLACK);
+        showbgd(255, 110, arrows_47x26, 47, 26, GREYY, BLACK);
         if(AS3935_OUTDOORS)
         {
-          showbgd(257, 175, slider_off_44x27, 44, 27, GREYY, BLACK);
+          showbgd(257, 155, slider_off_44x27, 44, 27, GREYY, BLACK);
         }
         else
         {
-          showbgd(257, 175, slider_on_44x27, 44, 27, GREYY, BLACK);
+          showbgd(257, 155, slider_on_44x27, 44, 27, GREYY, BLACK);
         }
+        if(MetricON)
+        {
+          showbgd(210, 200, slider_on_44x27, 44, 27, GREYY, BLACK);
+        }
+        else
+        {
+          showbgd(210, 200, slider_off_44x27, 44, 27, GREYY, BLACK);
+        }
+
         //control LED
         controlLED('0'); //off
         //control Logo
@@ -479,11 +490,26 @@ void showScreen(int screenNr)
           controlLED('R');
           controlLogo(RED);
         }
-        if(TEMP_BME280 < 10){   tft.print(" ");  }     //add leading spaces
-        tft.print(TEMP_BME280,1);
-        tft.print(" ");
-        tft.print((char)247); //to print the ° symbol
-        tft.println("C");
+
+        if(MetricON)
+        {
+           if(TEMP_BME280 < 10){   tft.print(" ");  }     //add leading spaces
+           tft.print(TEMP_BME280,1);
+           tft.print(" ");
+           tft.print((char)247); //to print the ° symbol
+           tft.println("C");
+        }
+        else
+        {
+           float TEMP_BME280_F = ((TEMP_BME280 * 9)/5 + 32);
+           if(TEMP_BME280_F < 10){   tft.print(" ");  }     //add leading spaces
+           tft.print(TEMP_BME280_F,1);
+           tft.print(" ");
+           tft.print((char)247); //to print the ° symbol
+           tft.println("F");
+        }
+        
+        
         /*
         //print scale with fillRect(startX, startY, width, height, color)
         tft.fillRect( 10, 175, 33, 18, GREY);
@@ -508,12 +534,25 @@ void showScreen(int screenNr)
         tft.drawLine(Xindic, 175, Xindic, 198, WHITE);
         //print values of scale
         tft.setTextSize(1); 
-        tft.setCursor(10, 165); tft.setTextColor(GREY,BLACK); tft.print("-5");
-        tft.setCursor(45, 165); tft.setTextColor(BLUE,BLACK); tft.print("0");
-        tft.setCursor(167, 165); tft.setTextColor(GREEN,BLACK); tft.print("19");
-        tft.setCursor(207, 165); tft.setTextColor(YELLOW,BLACK); tft.print("25");
-        tft.setCursor(248, 165); tft.setTextColor(RED,BLACK); tft.print("31");
-        tft.setCursor(295, 165); tft.setTextColor(RED,BLACK); tft.print("40"); 
+
+        if(MetricON)
+        {
+          tft.setCursor(10, 165); tft.setTextColor(GREY,BLACK); tft.print("-5");
+          tft.setCursor(45, 165); tft.setTextColor(BLUE,BLACK); tft.print("0");
+          tft.setCursor(167, 165); tft.setTextColor(GREEN,BLACK); tft.print("19");
+          tft.setCursor(207, 165); tft.setTextColor(YELLOW,BLACK); tft.print("25");
+          tft.setCursor(248, 165); tft.setTextColor(RED,BLACK); tft.print("31");
+          tft.setCursor(295, 165); tft.setTextColor(RED,BLACK); tft.print("40"); 
+        }
+        else
+        {
+          tft.setCursor(10, 165); tft.setTextColor(GREY,BLACK); tft.print("23");
+          tft.setCursor(45, 165); tft.setTextColor(BLUE,BLACK); tft.print("32");
+          tft.setCursor(167, 165); tft.setTextColor(GREEN,BLACK); tft.print("66");
+          tft.setCursor(207, 165); tft.setTextColor(YELLOW,BLACK); tft.print("77");
+          tft.setCursor(248, 165); tft.setTextColor(RED,BLACK); tft.print("88");
+          tft.setCursor(295, 165); tft.setTextColor(RED,BLACK); tft.print("104"); 
+        }
         break; 
 
       
@@ -745,12 +784,25 @@ void lightningscreen()
           {
             uint8_t lightning_dist_km = lightX.AS3935_GetLightningDistKm();
             Serial.print("Lightning detected! Distance to strike: ");
-            Serial.print(lightning_dist_km);
-            Serial.println("KM");
             lastErrorLine1 = "Lightning detected!    ";
             lastErrorLine2 = "Distance to strike:";
-            lastErrorLine2 += lightning_dist_km;
-            lastErrorLine2 += "KM ";
+            
+            if(MetricON)
+            {
+              Serial.print(lightning_dist_km);
+              Serial.println("km");
+              lastErrorLine2 += lightning_dist_km;
+              lastErrorLine2 += "km ";
+            }
+            else
+            {
+              uint8_t lightning_dist_miles = lightning_dist_km / 1.609344;
+              Serial.print(lightning_dist_miles);
+              Serial.println("mi");
+              lastErrorLine2 += lightning_dist_miles;
+              lastErrorLine2 += "mi ";
+            }
+            
             tft.println(lastErrorLine1);
             tft.setCursor(35, 98);
             tft.println(lastErrorLine2);
@@ -882,11 +934,24 @@ void printValues()
             {
               tft.setTextColor(RED,BLACK);
             }
-            if(TEMP_BME280 < 10){   tft.print(" ");  }     //add leading spaces
-            tft.print(TEMP_BME280,1);
-            tft.print(" ");
-            tft.print((char)247); //to print the ° symbol
-            tft.println("C  ");
+
+            if(MetricON)
+            {
+               if(TEMP_BME280 < 10){   tft.print(" ");  }     //add leading spaces
+               tft.print(TEMP_BME280,1);
+               tft.print(" ");
+               tft.print((char)247); //to print the ° symbol
+               tft.println("C  ");
+            }
+            else
+            {
+               float TEMP_BME280_F = ((TEMP_BME280 * 9)/5 + 32);
+               if(TEMP_BME280_F < 10){   tft.print(" ");  }     //add leading spaces
+               tft.print(TEMP_BME280_F,1);
+               tft.print(" ");
+               tft.print((char)247); //to print the ° symbol
+               tft.println("F");
+            }
       
             //Humidity
             tft.setCursor(140, 200);
@@ -1136,13 +1201,19 @@ void inputControl()
             toggleBuzzer();
         }
         //check indoor/outdoor button
-        else if( (Xpos > 50) && (Xpos < 85) && (Ypos > 190) && (Ypos < 235) )
+        else if( (Xpos > 70) && (Xpos < 105) && (Ypos > 190) && (Ypos < 235) )
         {
             //Serial.println("Touch on indoor/outdoor button!");
             toggleIndoor();
         }
+        //check Metric/Imperial button
+        else if( (Xpos > 0) && (Xpos < 45) && (Ypos > 160) && (Ypos < 200) )
+        {
+            //Serial.println("Touch on °C/°F button!");
+            toggleMetric();
+        }
         //check arrow left
-        else if( (Xpos > 110) && (Xpos < 150) && (Ypos > 190) && (Ypos < 208) )
+        else if( (Xpos > 125) && (Xpos < 165) && (Ypos > 190) && (Ypos < 208) )
         {
             //Serial.println("Touch on arrow left!");
             slideshowTimer--;
@@ -1150,9 +1221,9 @@ void inputControl()
             
         }
         //check arrow right
-        else if( (Xpos > 110) && (Xpos < 150) && (Ypos > 214) && (Ypos < 235) )
+        else if( (Xpos > 125) && (Xpos < 165) && (Ypos > 214) && (Ypos < 235) )
         {
-           //Serial.println("Touch on arrow right!");
+            //Serial.println("Touch on arrow right!");
             slideshowTimer++;
             if(slideshowTimer > 60){slideshowTimer = 60;}
         }
@@ -1277,6 +1348,12 @@ void toggleBuzzer()
   EEPROM.write(Buzzer_EEPROMaddr, BuzzerEnabled);
 }
 
+//check state of MetricON
+void toggleMetric()
+{
+  if(MetricON) { MetricON = false; } else { MetricON = true; }
+  EEPROM.write(MetricON_EEPROMaddr, MetricON);
+}
 
 //check status of indoor mode & toggle + write to long term memory (so if you loose power, we still know what you want)
 void toggleIndoor()
@@ -1288,7 +1365,7 @@ void toggleIndoor()
   tft.setFont();  //standard system font
   tft.setTextSize(2);
   tft.setTextColor(RED,BLACK); 
-  tft.setCursor(20, 180);
+  tft.setCursor(20, 160);
   tft.print("Please reboot!    ");
   delay(800);
 }
