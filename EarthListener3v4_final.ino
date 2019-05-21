@@ -159,7 +159,7 @@ int lastSecond = 99;  //we set this value so we can know when we just booted
 /* --- menus --- */
 int currentScreenNr = 0;        //start with bootscreen
 int previousScreenNr;
-boolean slideShopPlaying;        //is the slideshow playing? yes=1, no=0
+boolean slideShowPlaying;        //is the slideshow playing? yes=1, no=0
 int slideshowTimer = 5;         //time (in seconds) to show each slide
 unsigned long timeStartSlide = 0;     //time when slide was first shown;
 
@@ -337,7 +337,7 @@ void loop(void)
         else
         {
           //check if slideshow is on
-          if(slideShopPlaying)
+          if(slideShowPlaying)
           { 
             //automaticly change the screen everytime the slideshowTimer value has been reached
             if( ( millis() - timeStartSlide ) > (slideshowTimer * 1000) )
