@@ -260,6 +260,6 @@ void setup(void)
   AS3935IrqTriggered = 0;   //set the interrupt state of the AS3935 sensor to 0 (fix data input on boot)
   Serial.println("***End of setup, starting loop***");
   Serial.println();
-  slideShopPlaying = 0;   //we always start without slideshow
+  slideShowPlaying = 0;   //we always start without slideshow
   showScreen(1);    //show info screen
 }
