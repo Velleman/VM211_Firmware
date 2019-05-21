@@ -1001,7 +1001,7 @@ void printMenuBtn()
     else if(currentScreenNr == 1) //info screen
     {
       //print slideshow control button
-      if(slideShopPlaying)
+      if(slideShowPlaying)
       {
         showbgd(10, 210, play_23x23, 23, 23, GREYY, BLACK);
       }
@@ -1025,7 +1025,7 @@ void printMenuBtn()
     else  //other screens
     {
       //print slideshow control button
-      if(slideShopPlaying)
+      if(slideShowPlaying)
       {
         showbgd(10, 210, play_23x23, 23, 23, GREYY, BLACK);
       }
@@ -1296,7 +1296,7 @@ void checkBaseTouch()
     //Serial.println("Touch on info screen button!");
     previousScreenNr = currentScreenNr;
     currentScreenNr = 1;
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   //check input left side of screen
   else if( (Xpos > 50) && (Xpos < 300) && (Ypos > 0) && (Ypos < 100) )
@@ -1305,7 +1305,7 @@ void checkBaseTouch()
     previousScreenNr = currentScreenNr;
     currentScreenNr--;
     if(currentScreenNr < 3){currentScreenNr = 8;}
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   //check input right side of screen
   else if( (Xpos > 50) && (Xpos < 300) && (Ypos > 140) && (Ypos < 245) )
@@ -1314,7 +1314,7 @@ void checkBaseTouch()
     previousScreenNr = currentScreenNr;
     currentScreenNr++;
     if(currentScreenNr > 8){currentScreenNr = 3;}
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   //check input circles middle of screen
   else if( (Xpos > 0) && (Xpos < 40) && (Ypos > 80) && (Ypos < 165) )
@@ -1323,7 +1323,7 @@ void checkBaseTouch()
     previousScreenNr = currentScreenNr;
     currentScreenNr++;
     if(currentScreenNr > 8){currentScreenNr = 3;}
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   else
   {
@@ -1335,7 +1335,7 @@ void checkBaseTouch()
 //check state of Slideshow & toggle
 void toggleSlideShow()
 {
-  if(slideShopPlaying) { slideShopPlaying = 0; } else { slideShopPlaying = 1; }
+  if(slideShowPlaying) { slideShopPlaying = 0; } else { slideShopPlaying = 1; }
   printMenuBtn(); //reprint button
 }
 
