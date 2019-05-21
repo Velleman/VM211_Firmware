@@ -1335,7 +1335,7 @@ void checkBaseTouch()
 //check state of Slideshow & toggle
 void toggleSlideShow()
 {
-  if(slideShowPlaying) { slideShopPlaying = 0; } else { slideShopPlaying = 1; }
+  if(slideShowPlaying) { slideShowPlaying = 0; } else { slideShowPlaying = 1; }
   printMenuBtn(); //reprint button
 }
 
