@@ -293,7 +293,7 @@ void loop(void)
               Serial.print("Logfile '");
               Serial.print(logFileName);
               Serial.println("' did not exist, so print titles first..."); 
-              dataFile.println("Time [DD HH:MM;SS],Temperature [°C],Humidity [%],Pressure [mBar],Altitude [m],eCO² [ppm],TVOC [ppb]");
+              dataFile.println("Time [DD HH:MM:SS],Temperature [°C],Humidity [%],Pressure [mBar],Altitude [m],eCO² [ppm],TVOC [ppb]");
               logFileExists = 1;
             }
             dataFile.println(dataString);
