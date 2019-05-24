@@ -149,7 +149,7 @@ boolean logFileExists = 0;    //boolean to store if logfile exists on SD card
 const char * logFileName = "datalog.csv";   //CSV so you can easy load the data into MS Excel
 unsigned long allSeconds;
 int runDays;
-int secsRemaining;
+unsigned long secsRemaining;
 int runHours;
 int runMinutes;
 int runSeconds;
