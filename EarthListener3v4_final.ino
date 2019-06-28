@@ -60,6 +60,7 @@ String lastErrorLine2 =  "Keep Calm and Carry On";  //Keep last error message (b
 
 #define AS3935_ADD           0x03  // Default I2C Address of AS3935 sensor: x03 <-- you can use i2C scanner to see the i2c address
 #define AS3935_CAPACITANCE   72    // <-- SET THIS VALUE TO THE NUMBER LISTED ON YOUR BOARD (calculation between the caps)
+                                   // The value of the capacitance in the VMA343 lightning sensor is 72pF.
                                    // 72 pF default, 56pF for PlayingWithFusion board, 112pF for other
 #define AS3935_IRQPIN        18    // interrupt pin on board (18 or 19 on MEGA, 2 or 3 on UNO)
 
