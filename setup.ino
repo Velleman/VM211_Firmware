@@ -75,7 +75,6 @@ void setup(void)
   tft.fillScreen(BLACK);
   tft.setRotation(1);
   pinMode(touchPin, OUTPUT);  //pin to control reading of touchscreen
-  Serial.println();
 
 
   /* --- RGB LED pins --- */
@@ -89,7 +88,22 @@ void setup(void)
   
 
   /* --- Write LCD fields to show boot info --- */
+  Serial.println("Show EarthListener boot animation");
+  Serial.println();
   showScreen(0);
+
+
+  /* --- Check first boot & if true, set values to default settings --- */
+  if(EEPROM.read(firstBoot_EEPROMaddr))
+  {
+    //it's the first time the EarthListener has booted! Set default values
+    EEPROM.write(AS3935_SPI_EEPROMaddr, false);   //set AS3935 interface to I2C
+    EEPROM.write(AS3935_outdoor_EEPROMaddr, false);       //set AS3935 to indoor use
+    EEPROM.write(globalSense_EEPROMaddr, 2);      //set AS3935 sensitivity to 2 (medium)
+    EEPROM.write(Buzzer_EEPROMaddr, true);        //set buzzer on
+    EEPROM.write(MetricON_EEPROMaddr, true);      //set values to metric
+    EEPROM.write(firstBoot_EEPROMaddr, false);    //set firstboot on false, this will not be run again
+  }
 
 
   /* --- CCS811 sensor feedback --- */
@@ -103,80 +117,97 @@ void setup(void)
 
   /* --- AS3935 sensor feedback --- */
   Serial.println("***AS3935 sensor feedback***");
-  Serial.print("Scanning at address 0x");
-  if(AS3935_ADD < 10){Serial.print("0");}
-  Serial.print(AS3935_ADD,HEX);
-  Serial.println(", please wait...");
+  Serial.print("Checking interface...");
   
   tft.setCursor(15, 135);
   tft.setTextColor(WHITE); 
   tft.setTextSize(2);
   tft.print("AS3935 status: ");
-
-  Wire.begin();
-  while (!Serial);           // Scan i2C Address
-  delay(2000);
   
-  Wire.beginTransmission(AS3935_ADD);
-  byte error = Wire.endTransmission();
-  if (error == 0)
+  //read value for AS3935_SPI out of EEPROM memory
+  AS3935_SPI = EEPROM.read(AS3935_SPI_EEPROMaddr);
+  //Serial.print("AS3935_SPI = "); Serial.println(AS3935_SPI);
+  if(AS3935_SPI)
   {
-    Serial.print("Scanning complete, I2C device found at address 0x");
-    if(AS3935_ADD < 10){Serial.print("0");}
-    Serial.println(AS3935_ADD,HEX);
+    //SPI interface 
+    Serial.println(" SPI");
+    AS3935_SPI = true;    //set in case it's not properly set
 
-    tft.setTextColor(GREEN); 
-    tft.print("DETECTED");
+    SPI.begin(); // For SPI
+    if(!lightningSPI.beginSPI(spiCS, 2000000) ) 
+    { 
+      AS3935_bootOK = false;
+    }
+    else
+    {
+      //double check to be sure (read a value)
+      int spikeValTest = lightningSPI.readSpikeRejection();
+      if(spikeValTest != 0)
+      {
+        AS3935_bootOK = true;
+      }
+      else
+      {
+        AS3935_bootOK = false;
+      }
+    }
 
-    Serial.println("Starting setup procedure ...");
-    delay(500);
-  
-    I2c.begin(); // Set i2C Libr Enable pullups set to 400kHz speed
-    I2c.pullup(true); //Set i2C pUll up
-    I2c.setSpeed(1);  //Set speed to 1
-    delay(10); // Delay
-  
-    lightX.AS3935_DefInit();   // set registers to default
-    //read value for AS3935_OUTDOORS out of EEPROM memory
-    AS3935_OUTDOORS = EEPROM.read(AS3935_EEPROMaddr);
-    //Serial.print("AS3935_OUTDOORS = "); Serial.println(AS3935_OUTDOORS);
-    //AS3935_OUTDOORS = 0;
-    // now update sensor cal for your application and power up chip
-    lightX.AS3935_ManualCal(AS3935_CAPACITANCE, AS3935_OUTDOORS, AS3935_DIST_EN); //
-    //   AS3935_ManualCal Parameters:
-    //   --> capacitance, in pF (marked on package)
-    //   --> indoors/outdoors (INDOORS:0 / OUTDOORS:1)
-    //   --> disturbers (AS3935_DIST_EN:1 / AS3935_DIST_DIS:2)
-    // function also powers up the chip
-  
-    // enable interrupt (hook IRQ pin to Arduino Uno/Mega interrupt to AS3935_IRQPIN -> 19)
-    pinMode(AS3935_IRQPIN, INPUT_PULLUP);   // See http://arduino.cc/en/Tutorial/DigitalPins
-    attachInterrupt(digitalPinToInterrupt(AS3935_IRQPIN), interruptFunction, RISING);
-  
-    Serial.println("Printing out Reg vals:");
-    lightX.AS3935_PrintAllRegs(); // Print all Regs
-    Serial.println();  
   }
-  else if (error==4) 
-  {
-    Serial.print("Unknow error at address 0x");
-    if(AS3935_ADD < 10){Serial.print("0");}
-    Serial.println(AS3935_ADD,HEX);
-    Serial.println();  
-    tft.setTextColor(RED); 
-    tft.print("ERROR");
-  }    
   else
   {
-    Serial.print("Scanning complete, device not found at address 0x");
+    //IIC interface
+    Serial.println(" IIC");
+    AS3935_SPI = false;  //set in case it's not properly set
+
+    Serial.print("Scanning at address 0x");
     if(AS3935_ADD < 10){Serial.print("0");}
-    Serial.println(AS3935_ADD,HEX);
-    Serial.println();  
-    tft.setTextColor(RED); 
-    tft.print("NOT FOUND");
+    Serial.print(AS3935_ADD,HEX);
+    Serial.println(", please wait...");
+    
+    Wire.begin(); // Begin Wire before lightning sensor. 
+    if( !lightningIIC.begin() ){ // Initialize the sensor. 
+      AS3935_bootOK = false;
+    }
+    else
+    {
+      //double check to be sure (read a value)
+      int spikeValTest = lightningIIC.readSpikeRejection();
+      if(spikeValTest != 0)
+      {
+        AS3935_bootOK = true;
+      }
+      else
+      {
+        AS3935_bootOK = false;
+      }
+    }
   }
 
+  if(AS3935_bootOK)
+  {
+      Serial.println("Lightning sensor ready! Starting setup procedure...");
+      tft.setTextColor(GREEN); 
+      tft.print("DETECTED");
+  
+      updateLightningSense(); //set the sensitivity of the sensor
+      setupAS3935();  //run setup of AS3935 sensor
+    
+      // enable interrupt (hook IRQ pin to Arduino Uno/Mega interrupt to AS3935_IRQPIN -> 18)
+      pinMode(AS3935_IRQPIN, INPUT);   // See http://arduino.cc/en/Tutorial/DigitalPins
+      attachInterrupt(digitalPinToInterrupt(AS3935_IRQPIN), interruptFunction, CHANGE);
+      Serial.println("Setup AS3935 sensor done.");
+      Serial.println();  
+  }
+  else
+  {
+      Serial.println("Lightning sensor did not start up!");
+      Serial.println(); 
+      tft.setTextColor(RED); 
+      tft.print("ERROR");
+      delay(1000);
+  }
 
+  
   /* --- BME280 sensor feedback --- */
   Serial.println("***BME280 Sensor feedback***");
   myBME280.setI2CAddress(BME280_ADDR);        //The I2C address must be set before .begin() otherwise the cal values will fail to load
@@ -194,7 +225,7 @@ void setup(void)
   }
   else
   {
-    Serial.println("BME280 Sensor connection succesfull!");
+    Serial.println("BME280 Sensor connection successful!");
     tft.setTextColor(GREEN); 
     tft.print("DETECTED");
   }
@@ -208,7 +239,7 @@ void setup(void)
   //If you do not set the correct sea level pressure for your location FOR THE CURRENT DAY it will not be able to calculate the altitude accurately!
   //Barometric pressure at sea level changes daily based on the weather!
   //read value from EEPROM if Temp is in °F or °C and lightning units are in km or mi
-  MetricON = EEPROM.read(MetricON_EEPROMaddr);  //read metric or imperial state from memory. If not set, this will be true, since all EEPROM adresses are 0xFF by default
+  MetricON = EEPROM.read(MetricON_EEPROMaddr);  //read metric or imperial state from memory. If not set, this will be true, since all EEPROM addresses are 0xFF by default
   Serial.println();
 
 
@@ -260,6 +291,6 @@ void setup(void)
   AS3935IrqTriggered = 0;   //set the interrupt state of the AS3935 sensor to 0 (fix data input on boot)
   Serial.println("***End of setup, starting loop***");
   Serial.println();
-  slideShopPlaying = 0;   //we always start without slideshow
+  slideShowPlaying = 0;   //we always start without slide show
   showScreen(1);    //show info screen
 }

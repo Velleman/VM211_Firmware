@@ -138,12 +138,11 @@ unsigned long testFillScreen()
 //update the vars in the CCS811 sensor with temp & humi data from BME280 sensor
 void updateCCS811vars(float TEMP, float HUMIDITY)
 {
-  //Serial.println("Updating CCS811 sensor with enviroment values...");
+  //Serial.println("Updating CCS811 sensor with environment values...");
   myCCS811.setEnvironmentalData( HUMIDITY, TEMP);
   //Serial.print("New humidity= "); Serial.print(HUMIDITY, 2); Serial.println("%");
   //Serial.print("New temp= "); Serial.print(TEMP, 2); Serial.println("°C");
 }
-
   
 //interrupt from AS3935 sensor, set var so loop handles this first
 void interruptFunction()
@@ -152,7 +151,7 @@ void interruptFunction()
 }
 
 
-//change the LED color according to tatus
+//change the LED color according to status
 void controlLED(char COLOR)
 {
     if(LEDenabled)
@@ -269,13 +268,13 @@ void showScreen(int screenNr)
   float calcVal;
   //local vars for plotting the scales/graphs
   int startXimg = 10; int startYimg = 175;
-  int widthImg = 300;  int heightImg = 18;
+  int widthImg = 300;  int heightImg = 1;
 
   //if a screen has been changed, clear the part below the header & update menu buttons
   if(currentScreenNr != previousScreenNr)
   {
     //tft.fillScreen(BLACK); //clear screen
-    //we only have to clear part of the screen  (startX, startY, width, height, colour)
+    //we only have to clear part of the screen  (startX, startY, width, height, color)
     tft.fillRect(10,60,310,180,BLACK); 
     //print menu buttons
     printMenuBtn();
@@ -330,46 +329,91 @@ void showScreen(int screenNr)
         printValues();
         break;
 
-      
       //Setup screen
       case 2:
-        //print values
+        //global font & color
         tft.setFont();  //standard system font
-        tft.setTextSize(2);
+        tft.setTextSize(1);
         tft.setTextColor(GREYY,BLACK); 
-        tft.setCursor(20, 70);
-        tft.print("Buzzer on/off");
-        tft.setCursor(20, 115);
-        tft.print("Slideshow timer: "); tft.print(slideshowTimer); if(slideshowTimer < 10){tft.print(" ");}
-        tft.setCursor(20, 160);
-        tft.print("Indoor/outdoor use");
-        tft.setCursor(20, 205);
-        tft.print("Metric/Imperial");
-        //print icons (according to state)
+
+        //buzzer
+        tft.setCursor(50, 125);
         if(BuzzerEnabled)
         {
-          showbgd(257, 65, slider_on_44x27, 44, 27, GREYY, BLACK);
+          showbgd(40, 72, buzzer_on_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Buzzer ON ");
         }
         else
         {
-          showbgd(257, 65, slider_off_44x27, 44, 27, GREYY, BLACK);
+          showbgd(40, 72, buzzer_off_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Buzzer OFF");
         }
-        showbgd(255, 110, arrows_47x26, 47, 26, GREYY, BLACK);
-        if(AS3935_OUTDOORS)
-        {
-          showbgd(257, 155, slider_off_44x27, 44, 27, GREYY, BLACK);
-        }
-        else
-        {
-          showbgd(257, 155, slider_on_44x27, 44, 27, GREYY, BLACK);
-        }
+
+        //metric/imperial
+        tft.setCursor(140, 125);
         if(MetricON)
         {
-          showbgd(210, 200, slider_on_44x27, 44, 27, GREYY, BLACK);
+          showbgd(127, 72, metrical_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Metrical");
         }
         else
         {
-          showbgd(210, 200, slider_off_44x27, 44, 27, GREYY, BLACK);
+          showbgd(127, 72, imperial_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Imperial");
+        }
+
+        //slideshow timer
+        showbgd(214, 72, slideshow_65x50, 65, 50, GREYY, BLACK);
+        tft.setCursor(215, 125);
+        tft.print("Timer: "); tft.print(slideshowTimer); if(slideshowTimer < 10){tft.print(" ");}
+
+        //lightning sensitivity
+        tft.setCursor(40, 200);
+        if(globalSense == 1)
+        {      
+          showbgd(40, 148, lightning_low_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Sense Low   ");
+        }
+        else if(globalSense == 2)
+        {
+          showbgd(40, 148, lightning_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Sense Medium");
+        }
+        else if(globalSense == 3)
+        {
+          showbgd(40, 148, lightning_high_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Sense High  ");
+        }
+        else
+        {
+          showbgd(40, 148, lightning_65x50, 65, 50, RED, BLACK);
+          tft.print("Sense Error!");
+        }
+
+        //indoor/outdoor mode
+        tft.setCursor(135, 200);
+        if(AS3935_OUTDOORS)
+        {
+          showbgd(127, 148, outdoor_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Outdoor");
+        }
+        else
+        {
+          showbgd(127, 148, indoor_65x50, 65, 50, GREYY, BLACK);
+          tft.print(" Indoor");
+        }
+        
+        //chip interface AS3935
+        tft.setCursor(215, 200);
+        if(AS3935_SPI)
+        {
+          showbgd(214, 148, SPI_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Interface");
+        }
+        else
+        {
+          showbgd(214, 148, IIC_65x50, 65, 50, GREYY, BLACK);
+          tft.print("Interface");
         }
 
         //control LED
@@ -377,7 +421,7 @@ void showScreen(int screenNr)
         //control Logo
         controlLogo(GREYY);
         break;
-
+        
       
       //eCO2 screen
       case 3:
@@ -425,10 +469,13 @@ void showScreen(int screenNr)
         tft.fillRect( 80, 175, 56, 18, YELLOW);
         tft.fillRect( 137,175,173, 18, RED);
         */
-        //print scale from bitmap file
-        tft.setAddrWindow(startXimg, startYimg, startXimg + widthImg - 1, startYimg + heightImg - 1);
-        tft.pushColors((const uint8_t*)eCO2_graph_300x18, widthImg * heightImg, 1, false);
-        tft.fillRect( 10,193,300,  6, BLACK);  //earese the bottom under the scale (from previous indicator)
+        //print scale from bitmap file - file is 1 line, so print it 18 times
+        for( int zz = 0; zz < 18; zz++)
+        {
+          tft.setAddrWindow(startXimg, startYimg + zz, startXimg + widthImg - 1, startYimg + zz + heightImg - 1);
+          tft.pushColors((const uint8_t*)eCO2_graph_300x1, widthImg * heightImg, 1, false);
+        }
+        tft.fillRect( 10,193,300,  6, BLACK);  //erase the bottom under the scale (from previous indicator)
         //draw indicator with drawLine(startX, startY, endX, endY, color)
         //calcVal = ( ( (CO2-400) / (3000-400) ) * 300 ) + 10;
         calcVal = CO2-400;
@@ -518,10 +565,14 @@ void showScreen(int screenNr)
         tft.fillRect(207, 175, 39, 18, YELLOW);
         tft.fillRect(247, 175, 63, 18, RED);
         */
-        //print scale from bitmap file
-        tft.setAddrWindow(startXimg, startYimg, startXimg + widthImg - 1, startYimg + heightImg - 1);
-        tft.pushColors((const uint8_t*)temp_graph_300x18, widthImg * heightImg, 1, false);
-        tft.fillRect( 10,193,300, 6, BLACK);  //earese the bottom under the scale (from previous indicator)
+
+        //print scale from bitmap file - file is 1 line, so print it 18 times
+        for( int zz = 0; zz < 18; zz++)
+        {
+          tft.setAddrWindow(startXimg, startYimg + zz, startXimg + widthImg - 1, startYimg + zz + heightImg - 1);
+          tft.pushColors((const uint8_t*)temp_graph_300x1, widthImg * heightImg, 1, false);
+        }
+        tft.fillRect( 10,193,300, 6, BLACK);  //erase the bottom under the scale (from previous indicator)
         //draw indicator with drawLine(startX, startY, endX, endY, color)
         //calcVal = ( ( (TEMP_BME280+5) / (40+5) ) * 300 ) + 10;
         calcVal = TEMP_BME280 + 5;
@@ -623,10 +674,13 @@ void showScreen(int screenNr)
         tft.fillRect( 61, 175, 99, 18, YELLOW);
         tft.fillRect( 161,175,149, 18, RED);
         */
-        //print scale from bitmap file
-        tft.setAddrWindow(startXimg, startYimg, startXimg + widthImg - 1, startYimg + heightImg - 1);
-        tft.pushColors((const uint8_t*)tvoc_graph_300x18, widthImg * heightImg, 1, false);
-        tft.fillRect( 10,193,300, 6, BLACK);  //earese the bottom under the scale (from previous indicator)
+        //print scale from bitmap file - file is 1 line, so print it 18 times
+        for( int zz = 0; zz < 18; zz++)
+        {
+          tft.setAddrWindow(startXimg, startYimg + zz, startXimg + widthImg - 1, startYimg + zz + heightImg - 1);
+          tft.pushColors((const uint8_t*)tvoc_graph_300x1, widthImg * heightImg, 1, false);
+        }
+        tft.fillRect( 10,193,300, 6, BLACK);  //erase the bottom under the scale (from previous indicator)
         //draw indicator with drawLine(startX, startY, endX, endY, color)
         //calcVal = TVOC + 10;
         calcVal = TVOC + 10;
@@ -679,10 +733,13 @@ void showScreen(int screenNr)
         tft.fillRect( 102,175, 59, 18, GREEN);
         tft.fillRect( 162,175,148, 18, BLUE);
         */
-        //print scale from bitmap file
-        tft.setAddrWindow(startXimg, startYimg, startXimg + widthImg - 1, startYimg + heightImg - 1);
-        tft.pushColors((const uint8_t*)humi_graph_300x18, widthImg * heightImg, 1, false);
-        tft.fillRect( 10,193,300, 6, BLACK);  //earese the bottom under the scale (from previous indicator)
+        //print scale from bitmap file - file is 1 line, so print it 18 times
+        for( int zz = 0; zz < 18; zz++)
+        {
+          tft.setAddrWindow(startXimg, startYimg + zz, startXimg + widthImg - 1, startYimg + zz + heightImg - 1);
+          tft.pushColors((const uint8_t*)humi_graph_300x1, widthImg * heightImg, 1, false);
+        }
+        tft.fillRect( 10,193,300, 6, BLACK);  //erase the bottom under the scale (from previous indicator)
         //draw indicator with drawLine(startX, startY, endX, endY, color)
         //calcVal = ( (HUMIDITY_BME280 / 100) * 300) + 10;
         calcVal = HUMIDITY_BME280 * 3;
@@ -728,26 +785,7 @@ void showScreen(int screenNr)
         int tempScreenNr;
         tempScreenNr = previousScreenNr;  //store previous screen to show later
         previousScreenNr = 81;
-        showScreen(tempScreenNr);   //after lightning popup, show previous screen
-        break;
-
-        
-      //Altitude screen
-      // note: this screen is not shown in this project
-      // If you want to use this screen (and proper values), first use myBME280.setReferencePressure(seaLevelPressure); 
-      // If you do not set the correct sea level pressure for your location FOR THE CURRENT DAY it will not be able to calculate the altitude accurately!
-      // Barometric pressure at sea level changes daily based on the weather!
-      case 9:
-        //print value, icon & update LED
-        tft.setFont();  //standard system font
-        tft.setTextSize(3);
-        tft.setCursor(150, 110);
-        tft.setTextColor(GREY,BLACK);
-        tft.print(ALTITUDE_BME280,1);
-        tft.println(" m");
-        showbgd(10, 85, altitude_100x77, 100, 77, WHITE, BLACK);
-        controlLED('W');
-        controlLogo(WHITE);
+        showScreen(tempScreenNr);   //after lightning pop-up, show previous screen
         break;
 
         
@@ -770,19 +808,17 @@ void lightningscreen()
           tft.setTextColor(RED,BLACK);
       
           //interpret interrupt source
-          if (int_src == 0)
+          if (int_src == LIGHTNING_INT)
           {
-            Serial.println("IRQ source result not expected...");
-            lastErrorLine1 = "Error:IRQ source result";
-            lastErrorLine2 = "      not expected...  ";
-            tft.println(lastErrorLine1);
-            tft.setCursor(35, 98);
-            tft.println(lastErrorLine2);
-
-          }
-          else if (int_src == 1)
-          {
-            uint8_t lightning_dist_km = lightX.AS3935_GetLightningDistKm();
+            uint8_t lightning_dist_km;
+            if(AS3935_SPI)
+            {
+                 lightning_dist_km = lightningSPI.distanceToStorm(); 
+            }else
+            {
+                 lightning_dist_km = lightningIIC.distanceToStorm(); 
+            }
+            
             Serial.print("Lightning detected! Distance to strike: ");
             lastErrorLine1 = "Lightning detected!    ";
             lastErrorLine2 = "Distance to strike:";
@@ -806,8 +842,21 @@ void lightningscreen()
             tft.println(lastErrorLine1);
             tft.setCursor(35, 98);
             tft.println(lastErrorLine2);
+
+            //report lightning energy, a pure number that does not have any physical meaning
+            long lightEnergy;
+            if(AS3935_SPI)
+            {
+                     lightEnergy = lightningSPI.lightningEnergy(); 
+            }else
+            {
+                     lightEnergy = lightningIIC.lightningEnergy(); 
+            }
+            
+            Serial.print("Lightning Energy: "); 
+            Serial.println(lightEnergy); 
           }
-          else if (int_src == 2)
+          else if (int_src == DISTURBER_INT)
           {       
             Serial.println("Disturber detected!");
             lastErrorLine1 = "Disturber detected!    ";
@@ -816,16 +865,26 @@ void lightningscreen()
             tft.setCursor(35, 98);
             tft.println(lastErrorLine2);
           }
-          else if (int_src == 3)
+          else if (int_src == NOISE_INT)
           {
-            Serial.println("Noise level too high! Move the sensor.");
-            lastErrorLine1 = "Noise level too high!  ";
+            Serial.println("Noise detected! Move the sensor.");
+            lastErrorLine1 = "Noise detected!  ";
             lastErrorLine2 = "Please move the sensor.";
             tft.println(lastErrorLine1);
             tft.setCursor(35, 98);
             tft.println(lastErrorLine2);
           }
-          //lightX.AS3935_PrintAllRegs(); // Set for debug
+          else
+          {
+            Serial.print("IRQ source result "); Serial.print(int_src); Serial.println(" not expected...");
+            lastErrorLine1 = "Error:IRQ source result";
+            lastErrorLine2 = "  ";
+            lastErrorLine2 += int_src;
+            lastErrorLine2 += "   not expected...  ";
+            tft.println(lastErrorLine1);
+            tft.setCursor(35, 98);
+            tft.println(lastErrorLine2);
+          }
           
           //print icon
           showbgd(210, 125, lightning_100x77, 100, 77, YELLOW, BLACK);
@@ -836,7 +895,7 @@ void lightningscreen()
           tft.println("Last detection:");
           tft.setCursor(35, 165);
           printLastDetectionTimeAS3935();
-          AS3935IrqTriggeredTime = millis();  //set pervious detection to now
+          AS3935IrqTriggeredTime = millis();  //set previous detection to now
       
           //buzz the buzzer for a short period + control the LED (if they are turned on)
           if(BuzzerEnabled){digitalWrite(BuzzerPin, HIGH);}
@@ -859,13 +918,193 @@ void lightningscreen()
 }
 
 
+//setup lighting sensor 
+void setupAS3935()
+{
+    // Set everything to default values
+    if(AS3935_SPI)
+    {
+              lightningSPI.resetSettings();
+    }else
+    {
+             lightningIIC.resetSettings();
+    }
+    delay(500);
+    
+    //read value for AS3935_OUTDOORS out of EEPROM memory
+    AS3935_OUTDOORS = EEPROM.read(AS3935_outdoor_EEPROMaddr);
+    //Serial.print("AS3935_OUTDOORS = "); Serial.println(AS3935_OUTDOORS);
+    // The lightning detector defaults to an outdoor setting (more gain/sensitivity), but this can be modified via the setup page in the GUI
+    int enviVal;
+    if(AS3935_OUTDOORS)
+    {
+      if(AS3935_SPI)
+      {
+              lightningSPI.setIndoorOutdoor(OUTDOOR);
+              enviVal = lightningSPI.readIndoorOutdoor();
+      }else
+      {
+              lightningIIC.setIndoorOutdoor(OUTDOOR);
+              enviVal = lightningIIC.readIndoorOutdoor();
+      }
+    }
+    else
+    {
+      if(AS3935_SPI)
+      {
+              lightningSPI.setIndoorOutdoor(INDOOR);
+              enviVal = lightningSPI.readIndoorOutdoor();
+      }else
+      {
+              lightningIIC.setIndoorOutdoor(INDOOR);
+              enviVal = lightningIIC.readIndoorOutdoor();
+      }
+      
+    }
+    //report current indoor/outdoor setting:
+    Serial.print("Current setting (indoor/outdoor): ");  
+    if( enviVal == INDOOR )  Serial.println("Indoor");  
+    else if( enviVal == OUTDOOR ) Serial.println("Outdoor");  
+    else Serial.println(enviVal, BIN); 
+
+    // "Disturbers" are events that are false lightning events. If you notice a lot of disturbers, you can have the chip not report those events on the interrupt lines. 
+    int maskVal;
+    if(AS3935_SPI)
+    {
+            lightningSPI.maskDisturber(maskDisturbers); 
+            maskVal = lightningSPI.readMaskDisturber();
+    }else
+    {
+            lightningIIC.maskDisturber(maskDisturbers); 
+            maskVal = lightningIIC.readMaskDisturber();
+    }
+    Serial.print("Are disturbers being masked: "); 
+    if (maskVal == 1) Serial.println("YES"); 
+    else if (maskVal == 0) Serial.println("NO"); 
+
+    //Noise floor setting from 1-7, one being the lowest. Default setting is two.     
+    int noiseVal;
+    if(AS3935_SPI)
+    {
+            lightningSPI.setNoiseLevel(noiseFloor);
+            noiseVal = lightningSPI.readNoiseLevel();
+    }else
+    {
+            lightningIIC.setNoiseLevel(noiseFloor);
+            noiseVal = lightningIIC.readNoiseLevel();
+    }
+    Serial.print("Noise Level is set at: ");
+    Serial.println(noiseVal);
+
+    // Watchdog threshold setting can be from 1-10, one being the lowest. Default setting is two.  
+    int watchVal;
+    if(AS3935_SPI)
+    {
+            lightningSPI.watchdogThreshold(watchDogVal); 
+            watchVal = lightningSPI.readWatchdogThreshold();
+    }else
+    {
+            lightningIIC.watchdogThreshold(watchDogVal); 
+            watchVal = lightningIIC.readWatchdogThreshold();
+    }   
+    Serial.print("Watchdog Threshold is set to: ");
+    Serial.println(watchVal);
+
+    // Spike Rejection setting from 1-11, one being the lowest. Default setting is two. 
+    // The shape of the spike is analyzed during the chip's validation routine. You can round this spike at the cost of sensitivity to distant events. 
+    int spikeVal;
+    if(AS3935_SPI)
+    {
+            lightningSPI.spikeRejection(spike); 
+            spikeVal = lightningSPI.readSpikeRejection();
+    }else
+    {
+            lightningIIC.spikeRejection(spike); 
+            spikeVal = lightningIIC.readSpikeRejection();
+    }    
+    Serial.print("Spike Rejection is set to: ");
+    Serial.println(spikeVal);
+
+    // This setting will change when the lightning detector issues an interrupt. For example you will only get an interrupt after five lightning strikes instead of one. 
+    // Default is one, and it takes settings of 1, 5, 9 and 16. Followed by its corresponding read function. Default is zero. 
+    uint8_t lightVal;
+    if(AS3935_SPI)
+    {
+            lightningSPI.lightningThreshold(lightningThresh); 
+            lightVal = lightningSPI.readLightningThreshold();
+    }else
+    {
+            lightningIIC.lightningThreshold(lightningThresh); 
+            lightVal = lightningIIC.readLightningThreshold();
+    }    
+    Serial.print("The number of strikes before interrupt is triggerd: "); 
+    Serial.println(lightVal); 
+
+    // When the distance to the storm is estimated, it takes into account other lightning that was sensed in the past 15 minutes. 
+    // If you want to reset time, then you can call this function. 
+    if(AS3935_SPI)
+    {
+             lightningSPI.clearStatistics(1); 
+    }else
+    {
+            lightningIIC.clearStatistics(1); 
+    }
+    
+    Serial.println("AS3935 sensor has been set!");
+}
+
+
+//set the sensitivity of the AS3935 sensor
+void updateLightningSense()
+{
+  globalSense = EEPROM.read(globalSense_EEPROMaddr);
+  switch (globalSense) 
+  {
+    case 1:   //low sensitivity
+      Serial.println("Setting AS3935 sensor to low sensitivity...");
+      noiseFloor = 7;    // noise threshold value between 1-7, one being the lowest. Default setting is 2
+      watchDogVal = 10;   // Watchdog threshold value between 1-10, one being the lowest. Default setting is 2
+      spike = 9;         // Spike Rejection value between 1-11, one being the lowest. Default setting is 2. 
+      lightningThresh = 5; //lightning threshold value, can be 1, 5, 9 and 16. Default setting is 1.
+      maskDisturbers = true; //Mask disturbers. Values can be true or false. Default setting is true.
+      break;
+    case 2:   //medium sensitivity
+      Serial.println("Setting AS3935 sensor to medium sensitivity...");
+      noiseFloor = 4;    // noise threshold value between 1-7, one being the lowest. Default setting is 2
+      watchDogVal = 5;   // Watchdog threshold value between 1-10, one being the lowest. Default setting is 2
+      spike = 5;         // Spike Rejection value between 1-11, one being the lowest. Default setting is 2. 
+      lightningThresh = 1; //lightning threshold value, can be 1, 5, 9 and 16. Default setting is 1.
+      maskDisturbers = true; //Mask disturbers. Values can be true or false. Default setting is true.
+      break;
+    case 3:   //high sensitivity
+      Serial.println("Setting AS3935 sensor to high sensitivity...");
+      noiseFloor = 1;    // noise threshold value between 1-7, one being the lowest. Default setting is 2
+      watchDogVal = 1;   // Watchdog threshold value between 1-10, one being the lowest. Default setting is 2
+      spike = 2;         // Spike Rejection value between 1-11, one being the lowest. Default setting is 2. 
+      lightningThresh = 1; //lightning threshold value, can be 1, 5, 9 and 16. Default setting is 1.
+      maskDisturbers = false; //Mask disturbers. Values can be true or false. Default setting is true.
+      break;
+    default:
+      Serial.println("Unknown sensitivity level for AS3935 sensor requested!");
+      Serial.println("Reset level to medium sensitivity...");
+      globalSense = 2;
+      noiseFloor = 4;    // noise threshold value between 1-7, one being the lowest. Default setting is 2
+      watchDogVal = 5;   // Watchdog threshold value between 1-10, one being the lowest. Default setting is 2
+      spike = 5;         // Spike Rejection value between 1-11, one being the lowest. Default setting is 2. 
+      lightningThresh = 1; //lightning threshold value, can be 1, 5, 9 and 16. Default setting is 1.
+      maskDisturbers = true; //Mask disturbers. Values can be true or false. Default setting is true.
+      break;
+  }
+}
+
+
 //prints sensor information to screen (only used in info screen)
 void printValues()
 {
             tft.setFont();  //standard system font
             tft.setTextSize(1);
             
-            //Print values, deleting those previously written by using a black background colour
+            //Print values, deleting those previously written by using a black background color
             //CO2
             tft.setCursor(50, 125);
             if (CO2 < 800)
@@ -991,7 +1230,7 @@ void printValues()
 }
 
 
-//print menue buttons, according to current screen
+//print menu buttons, according to current screen
 void printMenuBtn()
 {
     if(currentScreenNr == 0)
@@ -1000,8 +1239,8 @@ void printMenuBtn()
     }
     else if(currentScreenNr == 1) //info screen
     {
-      //print slideshow control button
-      if(slideShopPlaying)
+      //print slide show control button
+      if(slideShowPlaying)
       {
         showbgd(10, 210, play_23x23, 23, 23, GREYY, BLACK);
       }
@@ -1025,7 +1264,7 @@ void printMenuBtn()
     else  //other screens
     {
       //print slideshow control button
-      if(slideShopPlaying)
+      if(slideShowPlaying)
       {
         showbgd(10, 210, play_23x23, 23, 23, GREYY, BLACK);
       }
@@ -1053,9 +1292,18 @@ void printLastDetectionTimeAS3935()
 {
   if(AS3935IrqTriggeredTime == 0) //still set to init value -> no detection recorded!
   {
-    tft.setTextColor(GREEN,BLACK);
-    tft.print("    none    ");
-    if(currentScreenNr == 8){controlLED('G');controlLogo(GREEN);};
+    if(AS3935_bootOK)
+    {
+      tft.setTextColor(GREEN,BLACK);
+      tft.print("    none    ");
+      if(currentScreenNr == 8){controlLED('G');controlLogo(GREEN);};
+    }
+    else
+    {
+      tft.setTextColor(RED,BLACK);
+      tft.print("   error    ");
+      if(currentScreenNr == 8){controlLED('R');controlLogo(RED);};
+    }
   }
   else if(minutesSinceAS3935Trigger < 1)
   {
@@ -1122,13 +1370,13 @@ void inputControl()
         
       //info screen
       case 1:
-          //check slideshow button
+          //check slide show button
           if( (Xpos > 0) && (Xpos < 45) && (Ypos > 0) && (Ypos < 30) )
           {
-            //Serial.println("Touch on slideshow button!");
+            //Serial.println("Touch on slide show button!");
             toggleSlideShow();
             previousScreenNr = currentScreenNr;
-            currentScreenNr = 3;    //start slideshow on screen 3
+            currentScreenNr = 3;    //start slide show on screen 3
           }
           //check setup screen button
           else if( (Xpos > 0) && (Xpos < 45) && (Ypos > 210) && (Ypos < 245) )
@@ -1190,42 +1438,67 @@ void inputControl()
         //check info screen button
         if( (Xpos > 0) && (Xpos < 40) && (Ypos > 215) && (Ypos < 245) )
         {
-            //Serial.println("Touch on info screen button!");
-            previousScreenNr = currentScreenNr;
-            currentScreenNr = 1;
+          //Serial.println("Touch on info screen button!");
+          previousScreenNr = currentScreenNr;
+          currentScreenNr = 1;
         }
-        //check buzzer button
-        else if( (Xpos > 180) && (Xpos < 215) && (Ypos > 190) && (Ypos < 235) )
+        //check speaker button
+        else if( (Xpos > 140) && (Xpos < 220) && (Ypos > 30) && (Ypos < 80) )
         {
-            //Serial.println("Touch on buzzer button!");
-            toggleBuzzer();
+          //Serial.println("Touch on speaker button!");
+          toggleBuzzer();
+        }
+        //check metric/imperial button
+        else if( (Xpos > 140) && (Xpos < 220) && (Ypos > 100) && (Ypos < 140) )
+        {
+          //Serial.println("Touch on metric/imperial button!");
+          toggleMetric();
+        }
+        //check timer button
+        else if( (Xpos > 140) && (Xpos < 220) && (Ypos > 165) && (Ypos < 210) )
+        {
+          //Serial.println("Touch on timer button!");
+          slideshowTimer = slideshowTimer + 5;
+          if(slideshowTimer > 60){slideshowTimer = 5;}
+        }
+        //check sensitivity button
+        else if( (Xpos > 50) && (Xpos < 110) && (Ypos > 30) && (Ypos < 80) )
+        {
+          //Serial.println("Touch on sensitivity button!");
+          if(AS3935_bootOK)  //only when sensor is up and running can we change the value
+          {
+            globalSense++;
+            if(globalSense > 3){globalSense = 1;}
+            //write updated value to EEPROM long term memory
+            EEPROM.write(globalSense_EEPROMaddr, globalSense);
+            updateLightningSense(); //set the sensitivity of the sensor
+            setupAS3935();  //run setup of AS3935 sensor
+          }
+          else
+          {
+            //push warning message
+            tft.setFont();  //standard system font
+            tft.setTextSize(1);
+            tft.setTextColor(RED,BLACK); 
+            tft.setCursor(20, 220);
+            tft.print("Sensor error: check wiring & interface");
+          }
         }
         //check indoor/outdoor button
-        else if( (Xpos > 70) && (Xpos < 105) && (Ypos > 190) && (Ypos < 235) )
+        else if( (Xpos > 50) && (Xpos < 110) && (Ypos > 100) && (Ypos < 140) )
         {
-            //Serial.println("Touch on indoor/outdoor button!");
-            toggleIndoor();
+          //Serial.println("Touch on indoor/outdoor button!");
+          toggleIndoor();
         }
-        //check Metric/Imperial button
-        else if( (Xpos > 0) && (Xpos < 45) && (Ypos > 160) && (Ypos < 200) )
+        //check interface button
+        else if( (Xpos > 50) && (Xpos < 110) && (Ypos > 165) && (Ypos < 210) )
         {
-            //Serial.println("Touch on °C/°F button!");
-            toggleMetric();
+          //Serial.println("Touch on interface button!");
+          toggleInterface();
         }
-        //check arrow left
-        else if( (Xpos > 125) && (Xpos < 165) && (Ypos > 190) && (Ypos < 208) )
+        else
         {
-            //Serial.println("Touch on arrow left!");
-            slideshowTimer--;
-            if(slideshowTimer <1){slideshowTimer = 1;}
-            
-        }
-        //check arrow right
-        else if( (Xpos > 125) && (Xpos < 165) && (Ypos > 214) && (Ypos < 235) )
-        {
-            //Serial.println("Touch on arrow right!");
-            slideshowTimer++;
-            if(slideshowTimer > 60){slideshowTimer = 60;}
+          //Serial.println("No idea what you are touching there buddy...");
         }
         break;
         
@@ -1263,11 +1536,6 @@ void inputControl()
       case 81:
         // no touch functionality (delay of 3 seconds, so touch would never be handled correct)
         break;
-
-      //altitude screen
-      case 9:
-        checkBaseTouch();
-        break;
         
       default:
         // no default statements
@@ -1278,13 +1546,13 @@ void inputControl()
 
 //check for touches in detailed menus 
 //these values were found by simply touching parts of the screen and defining borders
-//there might be some logic, but I tried untill it worked :-)
+//there might be some logic, but I tried until it worked :-)
 void checkBaseTouch()
 {
-  //check slideshow button
+  //check slide show button
   if( (Xpos > 0) && (Xpos < 45) && (Ypos > 0) && (Ypos < 30) )
   {
-    //Serial.println("Touch on slideshow button!");
+    //Serial.println("Touch on slide show button!");
     toggleSlideShow();
     previousScreenNr = currentScreenNr;
     currentScreenNr++;    //go to the next slide immediately
@@ -1296,7 +1564,7 @@ void checkBaseTouch()
     //Serial.println("Touch on info screen button!");
     previousScreenNr = currentScreenNr;
     currentScreenNr = 1;
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   //check input left side of screen
   else if( (Xpos > 50) && (Xpos < 300) && (Ypos > 0) && (Ypos < 100) )
@@ -1305,7 +1573,7 @@ void checkBaseTouch()
     previousScreenNr = currentScreenNr;
     currentScreenNr--;
     if(currentScreenNr < 3){currentScreenNr = 8;}
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   //check input right side of screen
   else if( (Xpos > 50) && (Xpos < 300) && (Ypos > 140) && (Ypos < 245) )
@@ -1314,7 +1582,7 @@ void checkBaseTouch()
     previousScreenNr = currentScreenNr;
     currentScreenNr++;
     if(currentScreenNr > 8){currentScreenNr = 3;}
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   //check input circles middle of screen
   else if( (Xpos > 0) && (Xpos < 40) && (Ypos > 80) && (Ypos < 165) )
@@ -1323,7 +1591,7 @@ void checkBaseTouch()
     previousScreenNr = currentScreenNr;
     currentScreenNr++;
     if(currentScreenNr > 8){currentScreenNr = 3;}
-    slideShopPlaying = 0;
+    slideShowPlaying = 0;
   }
   else
   {
@@ -1332,10 +1600,10 @@ void checkBaseTouch()
 }
 
 
-//check state of Slideshow & toggle
+//check state of Slide show & toggle
 void toggleSlideShow()
 {
-  if(slideShopPlaying) { slideShopPlaying = 0; } else { slideShopPlaying = 1; }
+  if(slideShowPlaying) { slideShowPlaying = 0; } else { slideShowPlaying = 1; }
   printMenuBtn(); //reprint button
 }
 
@@ -1348,6 +1616,7 @@ void toggleBuzzer()
   EEPROM.write(Buzzer_EEPROMaddr, BuzzerEnabled);
 }
 
+
 //check state of MetricON
 void toggleMetric()
 {
@@ -1355,24 +1624,55 @@ void toggleMetric()
   EEPROM.write(MetricON_EEPROMaddr, MetricON);
 }
 
+
 //check status of indoor mode & toggle + write to long term memory (so if you loose power, we still know what you want)
 void toggleIndoor()
 {
-  if(AS3935_OUTDOORS){ AS3935_OUTDOORS = 0; } else { AS3935_OUTDOORS = 1; }
+  if(AS3935_OUTDOORS)
+  { 
+    AS3935_OUTDOORS = 0;
+    if(AS3935_SPI)
+    {
+             lightningSPI.setIndoorOutdoor(INDOOR); 
+    }else
+    {
+            lightningIIC.setIndoorOutdoor(INDOOR); 
+    }
+  } 
+  else 
+  { 
+    AS3935_OUTDOORS = 1; 
+    if(AS3935_SPI)
+    {
+             lightningSPI.setIndoorOutdoor(OUTDOOR);
+    }else
+    {
+            lightningIIC.setIndoorOutdoor(OUTDOOR);
+    }
+  }
   //write updated value to EEPROM long term memory
-  EEPROM.write(AS3935_EEPROMaddr, AS3935_OUTDOORS);
+  EEPROM.write(AS3935_outdoor_EEPROMaddr, AS3935_OUTDOORS);
+}
+
+
+//change interface from SPI to IIC or IIC to SPI - reboot required
+void toggleInterface()
+{
+  if(AS3935_SPI){ AS3935_SPI = false; } else { AS3935_SPI = true; }
+  //write updated value to EEPROM long term memory
+  EEPROM.write(AS3935_SPI_EEPROMaddr, AS3935_SPI);
   //push reboot message
   tft.setFont();  //standard system font
-  tft.setTextSize(2);
+  tft.setTextSize(1);
   tft.setTextColor(RED,BLACK); 
-  tft.setCursor(20, 160);
-  tft.print("Please reboot!    ");
+  tft.setCursor(20, 220);
+  tft.print("   Interface changed, please reboot!  ");
   delay(800);
 }
 
 
 // Draws a bitmap on the screen, works way faster then drawBitmap()!
-// showbgd(start position X, start position y, bitmap, width, height, colour, background colour)
+// showbgd(start position X, start position y, bitmap, width, height, color, background color)
 // GFX drawBitmap() expects each row to be on 8-bit boundary.  i.e. pad = 7
 // Mono BMP rows are on 32-bit boundary. i.e. pad = 31,  rows are in RVS order.
 // FreeFont bitmaps have no padding.  i.e. pad = 0.   e.g. 5x4 bitmap is in 3 bytes

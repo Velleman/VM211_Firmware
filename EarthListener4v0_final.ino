@@ -1,9 +1,9 @@
 /******************************************************************************
   EarthListener by Pieter Sijmons @ Velleman NV
-  Based on examples by Adafruit, SparkFun, J. Steinlage and Tom Igoe
+  Based on examples by Adafruit, SparkFun and Tom Igoe
   See tab 'info_and_refs' for more documentation
 ******************************************************************************/
-String SWversion = "v3.4";
+String SWversion = "v4.0";
 
 /***************************************/
 /* ---------- DECLARATIONS ----------- */
@@ -13,22 +13,26 @@ String SWversion = "v3.4";
 #include <SPI.h>                                // SPI library
 #include <EEPROM.h>                             // Library to read & store info in EEPROM long term memory
 
+
 /* --- Local Libraries --- */
 #include "src\Adafruit-GFX-Library\Adafruit_GFX.h"     	  // Core graphics library by Adafruit
 #include "src\Adafruit-GFX-Library\Fonts\FreeSans9pt7b.h" // Font FreeSans 9pts (as an alternative for basic font)
-#include "src\AS3935_I2C_PSImod\AS3935_I2C_PSImod.h"   	  // Specific lib for AS3935 sensor (mod by PSI to choose IRQ pin myself)
-#include "src\I2C\I2C.h"									                // I2C library for AS3935 lib
 #include "src\MCUFRIEND_kbv\MCUFRIEND_kbv.h"           	  // TFT library by David Prentice
 #include "src\SDmega\SDmega.h"                          	// SD library (mod by PSI to work with MEGA & TFT SD card shield)
 #include "src\SparkFun_BME280\src\SparkFunBME280.h"    	  // BME280 library by SparkFun
 #include "src\SparkFun_CCS811\src\SparkFunCCS811.h"    	  // CCS811 library by SparkFun
+#include "src\SparkFun_AS3935\src\SparkFun_AS3935.h"          // AS3935 library by SparkFun
 #include "src\TFTLCD-Library\Adafruit_TFTLCD.h"        	  // Hardware-specific library for TFT screen by Adafruit
 #include "src\TouchScreen\TouchScreen.h"               	  // TouchScreen library by Adafruit
 #include "bitmaps.h"                            			    // Icon library (local, hence the "")
 
 
+/* --- first boot --- */
+int firstBoot_EEPROMaddr = 5;   //EEPROM long term memory adress that we use to check if the EarthListener has been booted before (default will be true).
+
+
 /* --- CCS811 sensor --- */
-#define CCS811_ADDR 0x5B      //Default I2C Address of CCS811 sensor (secundair Address is 0x5A if jumper is closed)
+#define CCS811_ADDR 0x5B      //Default I2C Address of CCS811 sensor (secondary Address is 0x5A if jumper is closed)
 CCS811 myCCS811(CCS811_ADDR);
 int CO2;
 int TVOC;
@@ -42,35 +46,51 @@ float AMBIENTPRESSURE_BME280;
 float AMBIENTPRESSURE_BME280_c; //converted to mBar (= Pa / 100);
 float ALTITUDE_BME280;
 float TEMP_BME280;
-float seaLevelPressure = 101325; //pressure at sea level (Pa), needs to be set dayly for proper alitude value!
+float seaLevelPressure = 101325; //pressure at sea level (Pa), needs to be set daily for proper altitude value!
 float TEMP_comp = -3.3;   //the EarthListener is warmed up from the TFT screen hence reporting a higher temperature. This compensation corrects this.
 float HUMI_comp = 17;     //same for the humidity. Values are experimental and should be changed according to your findings.
 
 
 /* --- AS3935 sensor --- */
-// Iterrupt flag variable for AS3935 irqs that indicates interrupt has been triggered
+//selection of IIC or SPI interface (also change the jumper JSI on the board!)
+boolean AS3935_SPI = true;  //SPI= true & jumper JSI connected - IIC= false & jumper JSI disconnected
+int AS3935_SPI_EEPROMaddr = 3;       // address to store this value in long term memory (EEPROM)
+
+// Interrupt flag variable for AS3935 irqs that indicates interrupt has been triggered
 // Variables that get changed in interrupt routines need to be declared volatile
 // otherwise compiler can optimize them away, assuming they never get changed
 volatile int AS3935IrqTriggered;
 unsigned long AS3935IrqTriggeredTime = 0;     //time when last detection was triggered;
-uint8_t int_src;                              //interrupt source
+uint8_t int_src;                              //interrupt source:  This variable holds the number representing the lightning or non-lightning event issued by the lightning detector. 
 int minutesSinceAS3935Trigger;                //time since last detection
 String lastErrorLine1 =  "No Disturber (yet)...";   //Keep last error message (but set for when there is none)
 String lastErrorLine2 =  "Keep Calm and Carry On";  //Keep last error message (but set for when there is none)
 
+//defines
 #define AS3935_ADD           0x03  // Default I2C Address of AS3935 sensor: x03 <-- you can use i2C scanner to see the i2c address
-#define AS3935_CAPACITANCE   72    // <-- SET THIS VALUE TO THE NUMBER LISTED ON YOUR BOARD (calculation between the caps)
-                                   // 72 pF default, 56pF for PlayingWithFusion board, 112pF for other
 #define AS3935_IRQPIN        18    // interrupt pin on board (18 or 19 on MEGA, 2 or 3 on UNO)
+#define spiCS                41    // chip select pin
+#define INDOOR               0x12  // value for indoor use (do not change)   
+#define OUTDOOR              0xE   // value for outdoor use (do not change)
+#define LIGHTNING_INT        0x08  // value for lightning source (do not change)  
+#define DISTURBER_INT        0x04  // value for disturber source (do not change)
+#define NOISE_INT            0x01  // value for noise source (do not change)
 
-// defines for general chip settings
 boolean AS3935_OUTDOORS;            // Set to 1 to enabled for Outdoor Used, use 0 for Indoor Use
-int AS3935_EEPROMaddr = 0;          // address to store this value in long term memory (EEPROM)
-#define AS3935_DIST_DIS      0
-#define AS3935_DIST_EN       1
+int AS3935_outdoor_EEPROMaddr = 0;          // address to store this value in long term memory (EEPROM)
 
-// define Lightning sensor on specific address
-AS3935_I2C lightX((uint8_t)AS3935_ADD);
+// Values for modifying the AS3935's settings. All of these values are set in via the globalSense variable and controlled trough the setup page
+byte noiseFloor;        // noise threshold value between 1-7, one being the lowest. Default setting is 2
+byte watchDogVal;       // Watchdog threshold value between 1-10, one being the lowest. Default setting is 2
+byte spike;             // Spike Rejection value between 1-11, one being the lowest. Default setting is 2. 
+byte lightningThresh;   // lightning threshold value, can be 1, 5, 9 and 16. Default setting is 1.
+boolean maskDisturbers; // Mask disturbers. Values can be true or false. Default setting is true.
+byte globalSense;       // global sensitivity (sets values above + maskDisturber). Values are 1=low, 2=medium, 3=high. Default setting is 2.
+int globalSense_EEPROMaddr = 4;       // address to store this value in long term memory (EEPROM)
+
+SparkFun_AS3935 lightningSPI;              // define Lightning sensor for SPI
+SparkFun_AS3935 lightningIIC(AS3935_ADD);  // define Lightning sensor on specific address for IIC
+boolean AS3935_bootOK;                     // value to store OK boot status of the sensor
 
 
 /* --- LCD panel with touch --- */
@@ -81,7 +101,7 @@ AS3935_I2C lightX((uint8_t)AS3935_ADD);
 #define XP 8   // can be a digital pin
 #define touchPin 38 //pin to use for reading touchscreen
 int Xpos; int Ypos; //global positions to store touchscreen location
-unsigned long touchedTime = 0;     //time when last touchscreen interaction occured;
+unsigned long touchedTime = 0;     //time when last touchscreen interaction occurred;
 int touchTimeout = 300;           // timeout between touch inputs (ms)
 
 #define TS_MINX 100
@@ -118,7 +138,7 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 320);
 #define GREY    0xD69A
 #define GREYY   0xAD55 
 
-//now declaire tft item
+//now declare tft item
 MCUFRIEND_kbv tft;    //we use a DRIVER IC ILI9341
  
 
@@ -138,7 +158,7 @@ boolean LEDenabled = 1;     //1= LED on, 0= LED off. Will also declare pins for 
 
 
 /* --- datalogging & timing --- */
-// Modi
+// Modifications:
 // On the Ethernet Shield, CS is pin 4. Note that even if it's not
 // used as the CS pin, the hardware CS pin (10 on most Arduino boards,
 // 53 on the Mega) must be left as an output or the SD library
@@ -149,24 +169,27 @@ boolean logFileExists = 0;    //boolean to store if logfile exists on SD card
 const char * logFileName = "datalog.csv";   //CSV so you can easy load the data into MS Excel
 unsigned long allSeconds;
 int runDays;
-int secsRemaining;
+unsigned long secsRemaining;
 int runHours;
 int runMinutes;
 int runSeconds;
-int lastSecond = 99;  //we set this value so we can know when we just booted
+int lastSecond = 99;        //we set this value so we can know when we just booted
+int secondCounter = 0;      //counter to calculate the number of seconds that have been passed between loggings
+int loggingInterval = 10;   //interval to log the values to the SD card. Default: 10, min: 1, maximum: 3600 (1 hour)
 
 
 /* --- menus --- */
 int currentScreenNr = 0;        //start with bootscreen
 int previousScreenNr;
-boolean slideShopPlaying;        //is the slideshow playing? yes=1, no=0
+boolean slideShowPlaying;        //is the slide show playing? yes=1, no=0
 int slideshowTimer = 5;         //time (in seconds) to show each slide
 unsigned long timeStartSlide = 0;     //time when slide was first shown;
 
 
 /* --- metric / imperial switch --- */
-boolean MetricON;  //boolean to check if values of temperature and lightning distance are set in celcius/km or fahrenheit/miles => can be modified via TFT interface
+boolean MetricON;  //boolean to check if values of temperature and lightning distance are set in Celsius/km or Fahrenheit/miles => can be modified via TFT interface
 int MetricON_EEPROMaddr = 2;  // address to store this value in long term memory (EEPROM)
+
 
 
 /***************************************/
@@ -185,13 +208,16 @@ void loop(void)
       touchedTime = millis();
       //Serial.print("We have been touched! X=");Serial.print(Xpos);Serial.print(", Y="); Serial.println(Ypos);
       inputControl();
-      showScreen(currentScreenNr);  //0:Boot, 1:Info screen, 2:Setup, 3:eCO², 4:Temperature 5:Pressure, 6:TVOC, 7:Humidity, 8:Lightning, 81:Lightning after interrupt, 9:Altitude
+      showScreen(currentScreenNr);  //0:Boot, 1:Info screen, 2:Setup, 3:eCO², 4:Temperature 5:Pressure, 6:TVOC, 7:Humidity, 8:Lightning, 81:Lightning after interrupt
     }
   }
 
   //only do next code each second
   if(runSeconds != lastSecond)
   {
+        //increase the secondCounter
+        secondCounter++;
+        
         /****** poll sensors & update vars + log to SD *****/
         // make a string for assembling the data to log on the SD card & add the current time:
         String dataString = "";
@@ -247,7 +273,7 @@ void loop(void)
         //read data from CCS811 (or show error)
         if (myCCS811.checkForStatusError())
         {
-          tft.fillRect(0,55,320,185,BLACK);  //clear part of the screen (startX, startY, width, height, colour)
+          tft.fillRect(0,55,320,185,BLACK);  //clear part of the screen (startX, startY, width, height, color)
           printSensorError();
           delay(2000); //keep this info on screen for 2 seconds
           tft.fillScreen(BLACK); //clear screen for next run
@@ -278,9 +304,10 @@ void loop(void)
           dataString += TVOC;
         }
     
-        //write dataString to SD (if SD card is present)
-        if(SDpresent)
+        //write dataString to SD (if SD card is present & we have passed the interval to log)
+        if(SDpresent && secondCounter >= loggingInterval)
         {
+          secondCounter = 0;
           File dataFile = SD.open(logFileName, FILE_WRITE);
           // open the file. note that only one file can be open at a time,
           // so you have to close this one before opening another.
@@ -293,7 +320,7 @@ void loop(void)
               Serial.print("Logfile '");
               Serial.print(logFileName);
               Serial.println("' did not exist, so print titles first..."); 
-              dataFile.println("Time [DD HH:MM;SS],Temperature [°C],Humidity [%],Pressure [mBar],Altitude [m],eCO² [ppm],TVOC [ppb]");
+              dataFile.println("Time since boot [DD HH:MM:SS],Temperature [°C],Humidity [%],Pressure [mBar],Altitude [m],eCO2 [ppm],TVOC [ppb]");
               logFileExists = 1;
             }
             dataFile.println(dataString);
@@ -316,30 +343,31 @@ void loop(void)
 
 
         /****show screens****/
-        //interrupt from lightining sensor! -> show lightning screen, otherwise show info screen
-        if (AS3935IrqTriggered != 0)  
+        //interrupt from lightning sensor! -> show lightning screen, otherwise show info screen
+        //we only do this if AS3935_bootOK is true (otherwise noise from sensor)
+        if (AS3935IrqTriggered && AS3935_bootOK)
         {
-          Serial.println("Interrupt from lightining sensor");
+          Serial.println("Interrupt from lightning sensor");
           
           //check interrupt source
           delay(5); //wait so not to overflow the bus
-          int_src = lightX.AS3935_GetInterruptSrc();
-          if (int_src == 0)
+          if(AS3935_SPI)
           {
-            Serial.println("IRQ source result not expected... (Ignoring this error)");
-          }
-          else
+            int_src = lightningSPI.readInterruptReg();
+          }else
           {
-            showScreen(81);   //0:Boot, 1:Info screen, 2:Setup, 3:eCO², 4:Temperature 5:Pressure, 6:TVOC, 7:Humidity, 8:Lightning, 81:Lightning after interrupt, 9:Altitude
+            int_src = lightningIIC.readInterruptReg();
           }
+          
+          showScreen(81);   //0:Boot, 1:Info screen, 2:Setup, 3:eCO², 4:Temperature 5:Pressure, 6:TVOC, 7:Humidity, 8:Lightning, 81:Lightning after interrupt
           AS3935IrqTriggered = 0;
         }
         else
         {
           //check if slideshow is on
-          if(slideShopPlaying)
+          if(slideShowPlaying)
           { 
-            //automaticly change the screen everytime the slideshowTimer value has been reached
+            //automatically change the screen every time the slideshowTimer value has been reached
             if( ( millis() - timeStartSlide ) > (slideshowTimer * 1000) )
             {
                   previousScreenNr = currentScreenNr;
@@ -353,7 +381,7 @@ void loop(void)
           {
             timeStartSlide = millis();
           }
-          showScreen(currentScreenNr);  //0:Boot, 1:Info screen, 2:Setup, 3:eCO², 4:Temperature 5:Pressure, 6:TVOC, 7:Humidity, 8:Lightning, 81:Lightning after interrupt, 9:Altitude
+          showScreen(currentScreenNr);  //0:Boot, 1:Info screen, 2:Setup, 3:eCO², 4:Temperature 5:Pressure, 6:TVOC, 7:Humidity, 8:Lightning, 81:Lightning after interrupt
         }
 
       

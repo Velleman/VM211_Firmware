@@ -1,6 +1,6 @@
 /******************************************************************************
   EarthListener by Pieter Sijmons @ Velleman NV
-  Based on examples by Adafruit, SparkFun, J. Steinlage and Tom Igoe
+  Based on examples by Adafruit, SparkFun and Tom Igoe
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
@@ -8,7 +8,8 @@
   OR OTHER DEALINGS IN THE SOFTWARE.
 
   Special thanks to Marie-Suzanne for keeping me fed & sane while coding/debugging.
-  Thanks to Brecht & Philip for their help and guidance.
+  Thanks to Xavier, Brecht & Philip for their help and guidance.
+  Thanks to the Velleman forum supporter Bert.test to help us debugging the code and all those who contributed to this firmware!
   -------------------------------
   BasicReadings.ino
   by Nathan Seidle @ SparkFun Electronics  March 9th, 2018
@@ -51,33 +52,22 @@
   -> we use shield, so modify the library!!!
 
   -------------------------------
-  LightiningI2C.ino
-  by J. Steinlage   2015 Jul 20
-  https://github.com/PlayingWithFusion/PWFusion_AS3935_I2C/blob/master/Examples/as3935_lightning_i2c_nocal/as3935_lightning_i2c_nocal.ino
-  
-  APPLICATION SPECIFIC NOTES (READ THIS!!!):
-  - This file configures then runs a program on an Arduino to interface with
-     an AS3935 Franklin Lightning Sensor manufactured by AMS.
-      - Configure Arduino
-      - Perform setup for AS3935 chip
-        --- capacitance registers for tuning (based on cal value provided)
-        --- configurations for your application specifics (indoor/outdoor, etc)
-      - read status/info from sensor
-      - Write formatted information to serial port
-   - Set configs for your specific needs using the #defines for wiring, and
-     review the setup() function for other settings (indoor/outdoor, for example)
-   - I2C specific note: This example uses the I2C interface via the I2C lib, not
-     the 'Wire' lib included with the Arduino IDE.
+  Example1_BasicLightning_I2C.ino
+  by Elias Santistevan @ SparkFun Electronics May, 2019
+  https://www.sparkfun.com/products/15441
 
-   Circuit:
-      Arduino Uno   Arduino Mega  -->  SEN-39001: AS3935 Breakout
-      SDA:    SDA        SDA      -->  MOSI/SDA   (SDA is labeled on the bottom of the Arduino)
-      SCLK:   SCL        SCL      -->  SCK/SCL    (SCL is labeled on the bottom of the Arduino)
-      SI:     pin  9     pin 9    -->  SI (select interface; GND=SPI, VDD=I2C
-      IRQ:    pin  2     pin 19    -->  IRQ
-      GND:    GND        ''       -->  CS (pull CS to ground even though it's not used)
-      GND:    GND        ''       -->  GND
-      5V:     5V         ''       -->  Arduino I/O is at 5V, so power board from 5V. Can use 3.3V with Due, etc
+  This example demonstrates how to detect lightning! It has a few basic
+  settings to help with rejecting noise or "disturbers" (false lightning events). 
+  It uses the onboard interrupt hardware pin, so in addition to attaching to
+  it data lines you'll need to connnect to the interrupt pin labled "INT". 
+
+  Hardware connections:
+  AS3935 -> Arduino
+  GND -> GND
+  VCC -> 5V
+  SDA -> A4 (UNO)
+  SCL -> A5 (UNO)
+  IRQ -> 2 (UNO)
   
   -------------------------------
   Speaker:  - to GND
