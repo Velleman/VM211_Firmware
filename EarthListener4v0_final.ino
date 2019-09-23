@@ -3,7 +3,33 @@
   Based on examples by Adafruit, SparkFun and Tom Igoe
   See tab 'info_and_refs' for more documentation
 ******************************************************************************/
-String SWversion = "v4.0";
+String SWversion = "v4.0_RTC";
+
+
+// /BL 20190921 DONE: Print the SWversion at start to Serial
+// /BL 20190921 DONE: Add Real Time Clock
+//                    Write date/time to log record if RTC clock is running
+//                    and millis (as original) if no RTC is running.
+
+// /BL 20190921 DONE: In case the lightning sensor does not start OK: 
+//                    - show the error a bit longer
+//                    - show the active interface SPI / IIC. 
+//                    - Suggest: check the interface and set it correct on the settings panel. 
+//                    But maybe we should try IIC interface first and if that fails try SPI
+//                    just in case the hardware is set for SPI. Would prevent customer problems (maybe)
+
+// /BL 20190922 DONE: Make the color BLUE a bit lighter
+//                    and define DARKBLUE like BLUE was.
+//                    The original BLUE was hard to see on the black background.
+// /BL 20190922 DONE: Report the size of the log file to Serial
+// /BL 20190922 DONE: Set Serial monitor baud rate to 115200 as I have that on all my sketches
+// /BL 20190922 DONE: Set humidity compensation to 2 (was 17) for my situation
+
+
+//              TODO: Add lightning indication on the SD card. 
+//                    Maybe a numeric indication (millis since...) and distance / energy
+//              TODO: Write new log header record if metric / imperial changes
+
 
 /***************************************/
 /* ---------- DECLARATIONS ----------- */
@@ -12,6 +38,8 @@ String SWversion = "v4.0";
 #include <Wire.h>                               // Wire library
 #include <SPI.h>                                // SPI library
 #include <EEPROM.h>                             // Library to read & store info in EEPROM long term memory
+#include <DS1302.h>                             // /BL library DS1302 for VMA301 (DS1302) from https://www.velleman.eu/
+#include <Time.h>                               // /BL for making a struct for the rtc
 
 
 /* --- Local Libraries --- */
@@ -48,8 +76,8 @@ float ALTITUDE_BME280;
 float TEMP_BME280;
 float seaLevelPressure = 101325; //pressure at sea level (Pa), needs to be set daily for proper altitude value!
 float TEMP_comp = -3.3;   //the EarthListener is warmed up from the TFT screen hence reporting a higher temperature. This compensation corrects this.
-float HUMI_comp = 17;     //same for the humidity. Values are experimental and should be changed according to your findings.
-
+// float HUMI_comp = 17;     //same for the humidity. Values are experimental and should be changed according to your findings.
+float HUMI_comp = 2;     // /BL looks like adding 17 is too much.
 
 /* --- AS3935 sensor --- */
 //selection of IIC or SPI interface (also change the jumper JSI on the board!)
@@ -125,10 +153,60 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 320);
 #define LCD_RD A0         // LCD Read goes to Analog 0
 #define LCD_RESET A4      // Normally A4, but can alternately just connect to Arduino's reset pin
 
+/* --- VMA301 DS1302 real time clock --- */
+// URL: https://forum.arduino.cc/index.php?topic=13779.0
+// You can use Arduino Mega analog-in pins as digital input and output.
+// They're numbered 54 (analog 0) through 69 (analog 15).
+const int kCePin   = 67;  // Chip Enable  67=A13 dark blue VMA301 label RST
+const int kIoPin   = 68;  // Input/Output 68=A14 purple    VMA301 label DAT
+const int kSclkPin = 69;  // Serial Clock 69=A15 grey      VMA301 label CLK
+
+/* --- define clock object --- */
+DS1302 rtc(kCePin, kIoPin, kSclkPin);
+// /BL plugged the VCC pin into 3.3V on the shield.
+
+/* define hour on which we think the day starts / ends */
+#define DAYSTARTHR 8 // hour starting to use not dimming colors
+#define DAYENDHR  22 // hour ending to use not dimming colors
+
+/* --- Variables to set / use the RTC clock - START --- */
+String dayAsString(const Time::Day day) {
+  switch (day) { // 1..7
+    case Time::kSunday: return "Sunday";
+    case Time::kMonday: return "Monday";
+    case Time::kTuesday: return "Tuesday";
+    case Time::kWednesday: return "Wednesday";
+    case Time::kThursday: return "Thursday";
+    case Time::kFriday: return "Friday";
+    case Time::kSaturday: return "Saturday";
+  }
+  return "(unknown day)";
+}
+
+const char* months[] =
+{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+
+byte second = 0;
+byte minute = 0;
+byte hour = 0;
+byte weekday = 0;
+byte monthday = 0;
+byte month = 0;
+unsigned short year = 0; // 2 byte year is not good enough so it would not fit in a byte!
+bool RTC_running = false; // if NO RTC is connected the library returns 165 as month and as day
+
+Time prev_time(2000, 1, 1, 0, 0, 0, Time::kThursday); // /BL just to know if we should refresh 
+                                                      //     the date/time display on the screen = rtc.time();
+
+/* --- Variables to set / use the RTC clock -  END  */
+
+
 // Assign human-readable names to some common 16-bit color values:
 // http://www.barth-dev.de/online/rgb565-color-picker/
 #define	BLACK   0x0000
-#define	BLUE    0x001F
+#define BLUE     0x9CFF // /BL was 0x001F Too dark to read on a black background  
+#define DARKBLUE 0x001F // /BL renamed from BLUE
+
 #define	RED     0xF800
 #define	GREEN   0x07E0
 #define CYAN    0x07FF
@@ -175,7 +253,7 @@ int runMinutes;
 int runSeconds;
 int lastSecond = 99;        //we set this value so we can know when we just booted
 int secondCounter = 0;      //counter to calculate the number of seconds that have been passed between loggings
-int loggingInterval = 10;   //interval to log the values to the SD card. Default: 10, min: 1, maximum: 3600 (1 hour)
+int loggingInterval = 5*60;   //interval to log the values to the SD card in seconds. Default: 10, min: 1, maximum: 3600 (1 hour)
 
 
 /* --- menus --- */
@@ -190,7 +268,7 @@ unsigned long timeStartSlide = 0;     //time when slide was first shown;
 boolean MetricON;  //boolean to check if values of temperature and lightning distance are set in Celsius/km or Fahrenheit/miles => can be modified via TFT interface
 int MetricON_EEPROMaddr = 2;  // address to store this value in long term memory (EEPROM)
 
-
+Time t = rtc.time(); // get the current time to determine if we DO have a running clock
 
 /***************************************/
 /* ----------- LOOP CODE ------------ */
@@ -199,6 +277,32 @@ void loop(void)
 {
   //timing: get time since boot: will write to global vars 
   getTimeSinceBoot();
+
+  // Prevent burn-in of the LCD. Do not write date/time between 01:00 and 08:00 hours.
+  Time t = rtc.time();
+  if ((t.yr    == prev_time.yr)    &
+      (t.mon   == prev_time.mon)   &
+      (t.date  == prev_time.date)  &
+      (t.hr    == prev_time.hr)    &
+      (t.min   == prev_time.min)   &  // /BL Not sure if time in hh:mm:ss is needed on screen, maybe just hh:hh?  
+      (t.sec   == prev_time.sec))   {
+          //  date/time still the same as previous. No need to be refresh on screen date / time
+  } else {  
+      prev_time = t;  // remember this time, so we do not need to write the date/time if the same 
+      if ((t.hr < 1) || (t.hr > 8)) {
+        LCDprintDate(); // date + time on LCD top row
+      } else {
+        // overwrite the LCD top row (if we do not show date + time) with black 
+        int16_t  x1, y1;
+        uint16_t w, h;
+        tft.setFont();  //standard system font
+        tft.setTextSize(2);
+        tft.setTextColor(tftcolor(DARKBLUE),tftcolor(BLACK));
+        tft.getTextBounds(" HHHH-HH-HH HH:HH:HH ", 0, 0, &x1, &y1, &w, &h);
+        tft.fillRect(x1,y1,w,h,BLACK);
+      }
+  }    
+
 
   //get touch input (but only after XXX ms after last touchscreen event!)
   if((millis() - touchedTime) > touchTimeout)
@@ -221,8 +325,12 @@ void loop(void)
         /****** poll sensors & update vars + log to SD *****/
         // make a string for assembling the data to log on the SD card & add the current time:
         String dataString = "";
-        char buf[17];
-        sprintf(buf,"%02d %02d:%02d:%02d",runDays,runHours,runMinutes,runSeconds);
+        char buf[20]; // /BL was 17 long
+        if(!RTC_running) {
+           sprintf(buf,"%02d %02d:%02d:%02d",runDays,runHours,runMinutes,runSeconds);
+        } else {   
+           sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d", t.yr, t.mon, t.date, t.hr, t.min, t.sec);
+        }
         dataString = buf;
         dataString += ",";
 
@@ -311,6 +419,8 @@ void loop(void)
           File dataFile = SD.open(logFileName, FILE_WRITE);
           // open the file. note that only one file can be open at a time,
           // so you have to close this one before opening another.
+          
+          uint32_t logfilesize = 0;
            
           // if the file is available, write to it:
           if (dataFile) 
@@ -320,17 +430,27 @@ void loop(void)
               Serial.print("Logfile '");
               Serial.print(logFileName);
               Serial.println("' did not exist, so print titles first..."); 
-              dataFile.println("Time since boot [DD HH:MM:SS],Temperature [°C],Humidity [%],Pressure [mBar],Altitude [m],eCO2 [ppm],TVOC [ppb]");
+              if(!RTC_running) {
+                 dataFile.println("Time since boot [DD HH:MM:SS],Temperature [°C],Humidity [%],Pressure [mBar],Altitude [m],eCO2 [ppm],TVOC [ppb]");
+              } else {
+                 dataFile.println(   "Time [YYYY-MM-DD HH:MM:SS],Temperature [°C],Humidity [%],Pressure [mBar],Altitude [m],eCO² [ppm],TVOC [ppb]");
+              }   
+                            
               logFileExists = 1;
             }
             dataFile.println(dataString);
+            logfilesize = dataFile.size(); // get the size before the close or it's zero.
             dataFile.close();
 
             // print to the serial port too:
             Serial.print("Written to file ");
             Serial.print(logFileName);
             Serial.print(" on SD card: ");
-            Serial.println(dataString);
+            // Serial.println(dataString);
+            Serial.print(dataString);
+            Serial.print(" file size now: ");
+            Serial.print(logfilesize,DEC);
+            Serial.println(" bytes");
           }
           // if the file isn't open, pop up an error:
           else 

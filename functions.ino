@@ -1703,3 +1703,35 @@ void showbgd(int x, int y, const uint8_t *bmp, int w, int h, uint16_t color, uin
     }
     tft.setAddrWindow(0, 0, tft.width() - 1, tft.height() - 1);
 }
+
+void LCDprintDate() { 
+  // /BL show date + time on top row of the LCD
+  tft.setFont();  //standard system font
+  tft.setTextSize(2);
+  tft.setTextColor(tftcolor(DARKBLUE),tftcolor(BLACK));
+
+  // get the date / time from the RTC
+  Time t = rtc.time();
+  // Show time and date on screen
+  char buf[50];
+  snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
+           // day.c_str(),
+           t.yr, t.mon, t.date,
+           t.hr, t.min, t.sec);
+  tft.setCursor(10,0);
+  //Serial.println(buf);
+  tft.println(buf);
+}
+
+uint16_t tftcolor(uint16_t basecolor) {
+    // Function to return a color value depending on the time of day.
+    if (basecolor == BLACK) {
+            return basecolor;  // No need to do difficult with dimming BLACK
+    } else {
+        Time t = rtc.time();
+                                        //0Brrrrrggggggbbbbb - colorbits per color
+        uint16_t nightcolor = basecolor & 0b0011100111100111; // let's try this one... (drop 2 hi bits per color)
+        if ((t.hr >= DAYSTARTHR) && (t.hr <= DAYENDHR)) {  return basecolor;  } // day color
+        else                                            {  return nightcolor; } // night color
+    }
+}
