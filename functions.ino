@@ -1,10 +1,12 @@
+#include "config.h"
+
 /***************************************/
 /* ------------ FUNCTIONS ------------ */
 /***************************************/
 
 //print final air quality (set color & LED)
-void Print_Level(int data1)
-{
+void Print_Level(int data1) {
+  
   if (data1 < 600)
   {
     tft.setTextColor(GREEN,BLACK);
@@ -788,6 +790,12 @@ void showScreen(int screenNr)
         showScreen(tempScreenNr);   //after lightning pop-up, show previous screen
         break;
 
+      // alarm clock screen
+      
+      case 9:
+        // draw clock screen
+        clockscreen();
+        break;
         
       default:
         //Serial.println("Nothing to see here folks!");
@@ -1556,7 +1564,7 @@ void checkBaseTouch()
     toggleSlideShow();
     previousScreenNr = currentScreenNr;
     currentScreenNr++;    //go to the next slide immediately
-    if(currentScreenNr > 8){currentScreenNr = 3;}
+    if(currentScreenNr > MAXSCREEN){currentScreenNr = 3;}
   }
   //check info screen button
   else if( (Xpos > 0) && (Xpos < 45) && (Ypos > 210) && (Ypos < 245) )
@@ -1572,7 +1580,7 @@ void checkBaseTouch()
     //Serial.println("Touch on left side of screen!");
     previousScreenNr = currentScreenNr;
     currentScreenNr--;
-    if(currentScreenNr < 3){currentScreenNr = 8;}
+    if(currentScreenNr < 3){currentScreenNr = MAXSCREEN;}
     slideShowPlaying = 0;
   }
   //check input right side of screen
@@ -1581,7 +1589,7 @@ void checkBaseTouch()
     //Serial.println("Touch on right side of screen!");
     previousScreenNr = currentScreenNr;
     currentScreenNr++;
-    if(currentScreenNr > 8){currentScreenNr = 3;}
+    if(currentScreenNr > MAXSCREEN){currentScreenNr = 3;}
     slideShowPlaying = 0;
   }
   //check input circles middle of screen
@@ -1590,7 +1598,7 @@ void checkBaseTouch()
     //Serial.println("Touch on middle bottom of screen!");
     previousScreenNr = currentScreenNr;
     currentScreenNr++;
-    if(currentScreenNr > 8){currentScreenNr = 3;}
+    if(currentScreenNr > MAXSCREEN){currentScreenNr = 3;}
     slideShowPlaying = 0;
   }
   else

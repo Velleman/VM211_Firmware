@@ -15,7 +15,6 @@ String SWversion = "v4.0";
 #include <SPI.h>                                // SPI library
 #include <EEPROM.h>                             // Library to read & store info in EEPROM long term memory
 
-
 /* --- Local Libraries --- */
 #include "src\Adafruit-GFX-Library\Adafruit_GFX.h"     	  // Core graphics library by Adafruit
 #include "src\Adafruit-GFX-Library\Fonts\FreeSans9pt7b.h" // Font FreeSans 9pts (as an alternative for basic font)
@@ -28,7 +27,7 @@ String SWversion = "v4.0";
 #include "src\TouchScreen\TouchScreen.h"               	  // TouchScreen library by Adafruit
 #include "bitmaps.h"                            			    // Icon library (local, hence the "")
 #include "src\RTClib\RTClib.h"                            // Adafruit RTC library 
-
+#include "config.h"                                       // instead of the magic numbers in the original code
 
 /* --- first boot --- */
 int firstBoot_EEPROMaddr = 5;   //EEPROM long term memory adress that we use to check if the EarthListener has been booted before (default will be true).
@@ -381,7 +380,7 @@ void loop(void)
             {
                   previousScreenNr = currentScreenNr;
                   currentScreenNr++;
-                  if(currentScreenNr > 8){currentScreenNr = 3;}
+                  if(currentScreenNr > MAXSCREEN){currentScreenNr = 3;}
             }
           }
           

@@ -2,6 +2,9 @@
 /* ----------- SETUP CODE ------------ */
 /***************************************/
 
+#include "config.h"
+
+
 void setup(void)
 {
   /* --- Start serial & print sketch info --- */
@@ -300,7 +303,7 @@ void setup(void)
   tft.setCursor(15, 225);
   tft.setTextColor(WHITE); 
   tft.setTextSize(2);
-  tft.print("RTC: ");
+  tft.print("DS1307 status: ");
   // see if the rtc is present and can be initialized:
   if (rtc.begin()) 
   {
@@ -338,6 +341,6 @@ void setup(void)
   AS3935IrqTriggered = 0;   //set the interrupt state of the AS3935 sensor to 0 (fix data input on boot)
   Serial.println("***End of setup, starting loop***");
   Serial.println();
-  slideShowPlaying = 0;   //we always start without slide show
+  slideShowPlaying = INITIAL_SLIDESHOW_STATUS;   //we always start without slide show
   showScreen(1);    //show info screen
 }
