@@ -17,6 +17,7 @@ void setup(void)
   Serial.println();
 
 
+
   /* --- LCD screen feedback --- */
   Serial.println("***LCD screen feedback***");
   Serial.println(F("TFT LCD test"));
@@ -281,6 +282,52 @@ void setup(void)
   {
      Serial.println(" card failed, or not present!");
      SDpresent = 0;
+     tft.setTextColor(RED); 
+     tft.print("NOT FOUND");
+  }
+  Serial.println();
+
+  // -- scan i2c for debug purposes - what devices do we have connected to the board?
+  // 0x5B is the CCS811 chip
+  // 0x03 is the AS3935 sensor
+  // 0x77 is the BME280
+  // 0x68 is the ds1307, if present
+  //scani2c(); 
+
+ /* --- RTC feedback --- */
+  Serial.println("*** RTC feedback***");
+  Serial.print("Initializing...");
+  tft.setCursor(15, 225);
+  tft.setTextColor(WHITE); 
+  tft.setTextSize(2);
+  tft.print("RTC: ");
+  // see if the rtc is present and can be initialized:
+  if (rtc.begin()) 
+  {
+      Serial.println("RTC initialized!");
+      RTCpresent = 1;
+      tft.setTextColor(GREEN); 
+      tft.print("DETECTED");
+      DateTime now = rtc.now(); 
+      Serial.print(now.year(), DEC);
+      Serial.print('/');
+      Serial.print(now.month(), DEC);
+      Serial.print('/');
+      Serial.print(now.day(), DEC);
+      Serial.print(" (");
+      Serial.print(daysOfTheWeek[now.dayOfTheWeek()]);
+      Serial.print(") ");
+      Serial.print(now.hour(), DEC);
+      Serial.print(':');
+      Serial.print(now.minute(), DEC);
+      Serial.print(':');
+      Serial.print(now.second(), DEC);
+      Serial.println();
+  }
+  else
+  {
+     Serial.println(" RTC failed or not present!");
+     RTCpresent = 0;
      tft.setTextColor(RED); 
      tft.print("NOT FOUND");
   }
