@@ -1,4 +1,5 @@
-// draw a clock on the screen
+// draw a clock on the screen - requires that a real time clock chip is present. 
+//
 // (C) 2020 Kristian Wiklund
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -67,34 +68,34 @@ if(oldmin!=now.minute()) {
   }
 
 
- if(oldhour!=now.hour()) {
-    tft.fillTriangle(CLOCK_H_HAND*CLOCK_R*sin(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_HAND*CLOCK_R*cos(oldhour*2*PI/12)+CLOCK_Y,
-       -CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,  
-       CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,
+ if(oldhour!=now.hour() || oldmin!=now.minute()) {
+    tft.fillTriangle(CLOCK_H_HAND*CLOCK_R*sin((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_X,-CLOCK_H_HAND*CLOCK_R*cos((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_Y,
+       -CLOCK_H_LEN*cos((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_X,-CLOCK_H_LEN*sin((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_Y,  
+       CLOCK_H_LEN*cos((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_X,CLOCK_H_LEN*sin((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_Y,
       BLACK);
   }
 
 // redraw  
   
-  tft.drawLine(CLOCK_X, CLOCK_Y, CLOCK_R*sin(now.second()*2*PI/60)+CLOCK_X,-CLOCK_R*cos(now.second()*2*PI/60)+CLOCK_Y, WHITE);
-  oldsec=now.second();
+ 
 
     
   oldmin=now.minute();
+  oldsec=now.second();
+  oldhour=now.hour();
+
+  tft.fillTriangle(CLOCK_H_HAND*CLOCK_R*sin((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_X,-CLOCK_H_HAND*CLOCK_R*cos((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_Y,
+  -CLOCK_H_LEN*cos((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_X,-CLOCK_H_LEN*sin((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_Y,  
+  CLOCK_H_LEN*cos((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_X,CLOCK_H_LEN*sin((oldhour+oldmin/60.0)*2*PI/12)+CLOCK_Y,
+  GREYY);
 
   tft.fillTriangle(CLOCK_R*sin(oldmin*2*PI/60)+CLOCK_X,-CLOCK_R*cos(oldmin*2*PI/60)+CLOCK_Y,
   -CLOCK_H_LEN*cos(oldmin*2*PI/60)+CLOCK_X,-CLOCK_H_LEN*sin(oldmin*2*PI/60)+CLOCK_Y,  
   CLOCK_H_LEN*cos(oldmin*2*PI/60)+CLOCK_X,CLOCK_H_LEN*sin(oldmin*2*PI/60)+CLOCK_Y,
    GREY);
-
    
-  oldhour=now.hour();
-
-  tft.fillTriangle(CLOCK_H_HAND*CLOCK_R*sin(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_HAND*CLOCK_R*cos(oldhour*2*PI/12)+CLOCK_Y,
-  -CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,  
-  CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,
-  GREYY);
-
+ tft.drawLine(CLOCK_X, CLOCK_Y, CLOCK_R*sin(now.second()*2*PI/60)+CLOCK_X,-CLOCK_R*cos(now.second()*2*PI/60)+CLOCK_Y, WHITE);
+  
 
 }
 
