@@ -23,8 +23,11 @@
 #include "config.h"
 #include <Math.h>
 
-void clockscreen() {
+#ifdef WITH_CLOCK
 
+void clockscreen() {
+  static int oldsec=0, oldmin=0, oldhour=0;
+  
   DateTime now = rtc.now();
 
   // this clears the screen in the caller
@@ -48,5 +51,51 @@ void clockscreen() {
 
     tft.drawLine(x1,y1,x2,y2,WHITE);
   }
+  
+
+// cleanup
+
+  if(oldsec!=now.second()) {
+    tft.drawLine(CLOCK_X, CLOCK_Y, CLOCK_R*sin(oldsec*2*PI/60)+CLOCK_X,-CLOCK_R*cos(oldsec*2*PI/60)+CLOCK_Y, BLACK);
+  }
+
+if(oldmin!=now.minute()) {
+    tft.fillTriangle(CLOCK_R*sin(oldmin*2*PI/60)+CLOCK_X,-CLOCK_R*cos(oldmin*2*PI/60)+CLOCK_Y,
+       -CLOCK_H_LEN*cos(oldmin*2*PI/60)+CLOCK_X,-CLOCK_H_LEN*sin(oldmin*2*PI/60)+CLOCK_Y,  
+       CLOCK_H_LEN*cos(oldmin*2*PI/60)+CLOCK_X,CLOCK_H_LEN*sin(oldmin*2*PI/60)+CLOCK_Y,
+      BLACK);
+  }
+
+
+ if(oldhour!=now.hour()) {
+    tft.fillTriangle(CLOCK_H_HAND*CLOCK_R*sin(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_HAND*CLOCK_R*cos(oldhour*2*PI/12)+CLOCK_Y,
+       -CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,  
+       CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,
+      BLACK);
+  }
+
+// redraw  
+  
+  tft.drawLine(CLOCK_X, CLOCK_Y, CLOCK_R*sin(now.second()*2*PI/60)+CLOCK_X,-CLOCK_R*cos(now.second()*2*PI/60)+CLOCK_Y, WHITE);
+  oldsec=now.second();
+
+    
+  oldmin=now.minute();
+
+  tft.fillTriangle(CLOCK_R*sin(oldmin*2*PI/60)+CLOCK_X,-CLOCK_R*cos(oldmin*2*PI/60)+CLOCK_Y,
+  -CLOCK_H_LEN*cos(oldmin*2*PI/60)+CLOCK_X,-CLOCK_H_LEN*sin(oldmin*2*PI/60)+CLOCK_Y,  
+  CLOCK_H_LEN*cos(oldmin*2*PI/60)+CLOCK_X,CLOCK_H_LEN*sin(oldmin*2*PI/60)+CLOCK_Y,
+   GREY);
+
+   
+  oldhour=now.hour();
+
+  tft.fillTriangle(CLOCK_H_HAND*CLOCK_R*sin(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_HAND*CLOCK_R*cos(oldhour*2*PI/12)+CLOCK_Y,
+  -CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,-CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,  
+  CLOCK_H_LEN*cos(oldhour*2*PI/12)+CLOCK_X,CLOCK_H_LEN*sin(oldhour*2*PI/12)+CLOCK_Y,
+  GREYY);
+
 
 }
+
+#endif

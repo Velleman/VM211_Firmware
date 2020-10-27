@@ -791,11 +791,13 @@ void showScreen(int screenNr)
         break;
 
       // alarm clock screen
-      
+
+#ifdef WITH_CLOCK
       case 9:
         // draw clock screen
         clockscreen();
         break;
+#endif
         
       default:
         //Serial.println("Nothing to see here folks!");
@@ -1283,13 +1285,15 @@ void printMenuBtn()
       //print menu screen button
       showbgd(287, 210, menu_23x23, 23, 23, GREYY, BLACK);
       //print location circles
-      for(int i=0; i<6; i++)
+
+      // this has slightly different behavior if the clock is used or not
+      for(int i=0; i<(MAXSCREEN-2); i++)
       {
-        int xPosCircle = 110 + (i * 20);
+        int xPosCircle = 110 + (i * 20)-((MAXSCREEN==9)?10:0);
         tft.fillCircle(xPosCircle, 221, 7, GREYY);   //fillCircle(uint16_t x0, uint16_t y0, uint16_t r, uint16_t color)
       }
       //fill currentscreen circle
-      int xPosCircleSelected = 110 + ((currentScreenNr - 3) * 20);
+      int xPosCircleSelected = 110 + ((currentScreenNr - 3) * 20)-((MAXSCREEN==9)?10:0);
       tft.fillCircle(xPosCircleSelected, 221, 5, BLACK);   //fillCircle(uint16_t x0, uint16_t y0, uint16_t r, uint16_t color)
     }
 }
