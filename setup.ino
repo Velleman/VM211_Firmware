@@ -85,6 +85,12 @@ void setup(void)
     pinMode(LEDr, OUTPUT);     digitalWrite(LEDr, LOW);
     pinMode(LEDb, OUTPUT);     digitalWrite(LEDb, LOW);
   }
+
+
+  /* --- DIGITAL outputs --- */
+  pinMode(GreenOutPin, OUTPUT);     digitalWrite(GreenOutPin, LOW);
+  pinMode(YellowOutPin, OUTPUT);    digitalWrite(YellowOutPin, LOW);
+  pinMode(RedOutPin, OUTPUT);       digitalWrite(RedOutPin, LOW);
   
 
   /* --- Write LCD fields to show boot info --- */
@@ -104,6 +110,22 @@ void setup(void)
     EEPROM.write(MetricON_EEPROMaddr, true);      //set values to metric
     EEPROM.write(firstBoot_EEPROMaddr, false);    //set firstboot on false, this will not be run again
   }
+
+
+  /* --- Tuya --- */
+  //If user does not use a pin: set the pin as PIN_UNUSED
+  Serial.println("***TUYA interface***");
+  Serial.println("TUYA init started");
+  //tuyav.setDebug(true);
+  tuyav.setDigitalInputs(30, 31, 32);                                                     //Set DigitalInputs: needs 3 pins
+  tuyav.setAnalogInputs(PIN_UNUSED, PIN_UNUSED, PIN_UNUSED);                              //Set AnalogInputs
+  tuyav.setDigitalOutputs(PIN_UNUSED, PIN_UNUSED, PIN_UNUSED, PIN_UNUSED, PIN_UNUSED);    //SetDigitalOutputs
+  tuyav.setAnalogOutputs(PIN_UNUSED, PIN_UNUSED, PIN_UNUSED);                             //Set AnalogOutputs
+  //UNCOMMENT NEXT LINE TO PAIR THE MODULE, COMMENT THE LINE AFTER PAIRING AND REFLASH THE ARDUINO
+  //Next line should only be executed once
+  //Serial.println("TUYA AP active"); tuyav.setWifiMode(SMART_CONFIG_STATE);
+  tuyav.initialize();
+  Serial.println();
 
 
   /* --- CCS811 sensor feedback --- */
@@ -285,6 +307,41 @@ void setup(void)
      tft.print("NOT FOUND");
   }
   Serial.println();
+
+
+  /* -- init the RTC module (RUN ONCE AFTER INSTALLING A RTC MODULE, THEN COMMENT OUT THIS BLOCK) */
+  // Init a new chip by turning off write protection and clearing the clock halt flag. 
+  // These methods needn't always be called. See the DS1302 datasheet for details.
+  /*
+  rtc.writeProtect(false);
+  rtc.halt(false);
+  // Make a new time object to set the date and time. Example: Saturday 14th of December 2019, 22:52:00
+  Time newT(2019, 12, 14, 22, 52, 00, Time::kSaturday);
+  // Set the time and date on the chip
+  rtc.time(newT);
+  */
+  
+
+  /* --- check if RTC is present --- */
+  Time t = rtc.time();
+  if (t.mon == 165)    //when there is no clock, this value will be returend as 165
+  {
+    RTCpresent = false; 
+    Serial.println("No Real Time Clock available! Using seconds since boot for logging.");
+  }
+  else if(t.yr == 2000) //when there is an error with the RTC, year will be set on 2000
+  {
+    RTCpresent = false; 
+    Serial.println("Real Time Clock error! Using seconds since boot for logging.");
+  }
+  else
+  {
+    RTCpresent = true;
+    Serial.println("Real Time Clock available! Current time:"); 
+    Serial.println(returnTime(t));
+  }
+  Serial.println();
+  
   
   /* --- end of boot, wait 2 secs & set interrupt state, then show info screen --- */
   delay(2000);

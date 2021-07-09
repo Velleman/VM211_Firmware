@@ -10,6 +10,7 @@ void Print_Level(int data1)
     tft.setTextColor(GREEN,BLACK);
     tft.println("Excellent Air");
     controlLED('G');
+    setOutput('G');
     controlLogo(GREEN);
   }
   else if ((data1 >= 600) && (data1 < 800))
@@ -17,6 +18,7 @@ void Print_Level(int data1)
     tft.setTextColor(GREEN,BLACK);
     tft.println("  Good Air   ");
     controlLED('G');
+    setOutput('G');
     controlLogo(GREEN);
   }
   else if ((data1 >= 800) && (data1 < 1000))
@@ -24,6 +26,7 @@ void Print_Level(int data1)
     tft.setTextColor(BLUE,BLACK);
     tft.println("  Fair Air   ");
     controlLED('B');
+    setOutput('Y');
     controlLogo(BLUE);
   }
   else if ((data1 >= 1000) && (data1 < 1500))
@@ -31,6 +34,7 @@ void Print_Level(int data1)
     tft.setTextColor(YELLOW,BLACK);
     tft.println("Mediocre Air ");
     controlLED('Y');
+    setOutput('Y');
     controlLogo(YELLOW);
   }
   else if (data1 >= 1500)
@@ -38,6 +42,7 @@ void Print_Level(int data1)
     tft.setTextColor(RED,BLACK);
     tft.println("   Bad Air   ");
     controlLED('R');
+    setOutput('R');
     controlLogo(RED);
   }
 }
@@ -197,6 +202,34 @@ void controlLED(char COLOR)
 }
 
 
+//set output channels to indicate air quality
+void setOutput(char COLOR)
+{
+  switch (COLOR) 
+  {
+    case 'G':     //green
+      digitalWrite(GreenOutPin,   HIGH);
+      digitalWrite(YellowOutPin,  LOW);
+      digitalWrite(RedOutPin,     LOW);
+      break;
+    case 'Y':     //yellow
+      digitalWrite(GreenOutPin,   LOW);
+      digitalWrite(YellowOutPin,  HIGH);
+      digitalWrite(RedOutPin,     LOW);
+      break;
+    case 'R':     //red
+      digitalWrite(GreenOutPin,   LOW);
+      digitalWrite(YellowOutPin,  LOW);
+      digitalWrite(RedOutPin,     HIGH);
+      break;
+    default:
+      digitalWrite(GreenOutPin,   LOW);
+      digitalWrite(YellowOutPin,  LOW);
+      digitalWrite(RedOutPin,     LOW);
+  }
+}
+
+
 //change the Velleman logo's color
 void controlLogo(uint16_t logocolor)
 {
@@ -223,6 +256,41 @@ int returnMinutes(unsigned long Millis)
   unsigned long conSeconds = Millis/1000;
   int conMinutes = conSeconds / 60;
   return conMinutes;
+}
+
+//return the day as a string
+String dayAsString(const Time::Day day) {
+  switch (day) {
+    case Time::kSunday: return "Sunday";
+    case Time::kMonday: return "Monday";
+    case Time::kTuesday: return "Tuesday";
+    case Time::kWednesday: return "Wednesday";
+    case Time::kThursday: return "Thursday";
+    case Time::kFriday: return "Friday";
+    case Time::kSaturday: return "Saturday";
+  }
+  return "(unknown day)";
+}
+
+
+// return the current time in a nice format
+String returnTime(Time currentTime) 
+{
+  // Get the current time and date from the chip.
+  Time t_now = currentTime;
+
+  // Name the day of the week.
+  const String day = dayAsString(t_now.day);
+
+  // Format the time and date and insert into the temporary buffer.
+  char buf[50];
+  snprintf(buf, sizeof(buf), "%s %04d-%02d-%02d %02d:%02d:%02d",
+           day.c_str(),
+           t_now.yr, t_now.mon, t_now.date,
+           t_now.hr, t_now.min, t_now.sec);
+
+  // return formatted string so we can see the time.
+  return(buf);
 }
 
 
@@ -1622,6 +1690,7 @@ void toggleMetric()
 {
   if(MetricON) { MetricON = false; } else { MetricON = true; }
   EEPROM.write(MetricON_EEPROMaddr, MetricON);
+  shownMinute = -1; //so the date will be updated asap
 }
 
 

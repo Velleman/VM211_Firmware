@@ -6,6 +6,13 @@ The Earth Listener is an Arduino based sensor device that reads multiple environ
 Buy it here: https://www.vellemanformakers.com/earth-listener/
 Follow the tutorial here: https://manuals.velleman.eu/category.php?id=378 
 
+Change log v4.2
+- added support for VMA354 Tuya IOT interface
+- digital pin 35,36,37 are used to indicate the air quality (green, yellow, red) to control external devices
+
+Change log v4.1
+- added support for VMA301 Real time clock module
+
 Change log v4.0
 - fixed some spelling mistakes
 - checks now if Earthlistener is booted for the first time, if true, sets default values

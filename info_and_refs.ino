@@ -79,7 +79,16 @@
                           R to A13
                           B to A14
 
-  -------------------------------           
+  -------------------------------       
+  Tuya VMA354 IoT interface module
+
+  Ccnnections:
+  VMA354            Arduino Mega
+  VCC               5V
+  GND               GND
+  RX                TX
+  TX                RX
+  -------------------------------        
   SD card datalogger on TFT shield on Arduino Mega
   Based on the example by Tom Igoe - 9 Apr 2012
   This example shows how to log data from three analog sensors (A11 -> A14) to an SD card using the SD library.
