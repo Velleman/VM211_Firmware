@@ -5,7 +5,9 @@
 void setup(void)
 {
   /* --- Start serial & print sketch info --- */
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial.print("---------------------------------- ");
+  Serial.print(SWversion);
   Serial.println("----------------------------------");
   Serial.print("Arduino is running Sketch: ");
   Serial.println(__FILE__);
@@ -149,10 +151,12 @@ void setup(void)
   //read value for AS3935_SPI out of EEPROM memory
   AS3935_SPI = EEPROM.read(AS3935_SPI_EEPROMaddr);
   //Serial.print("AS3935_SPI = "); Serial.println(AS3935_SPI);
+  String lightning_interface;
   if(AS3935_SPI)
   {
-    //SPI interface 
-    Serial.println(" SPI");
+    //SPI interface
+    lightning_interface = " SPI"; 
+    Serial.println(lightning_interface);
     AS3935_SPI = true;    //set in case it's not properly set
 
     SPI.begin(); // For SPI
@@ -178,7 +182,8 @@ void setup(void)
   else
   {
     //IIC interface
-    Serial.println(" IIC");
+    lightning_interface = " IIC";
+    Serial.println(lightning_interface);
     AS3935_SPI = false;  //set in case it's not properly set
 
     Serial.print("Scanning at address 0x");
@@ -221,12 +226,14 @@ void setup(void)
       Serial.println();  
   }
   else
-  {
-      Serial.println("Lightning sensor did not start up!");
+  {  
+      Serial.print("Lightning sensor did not start up! Interface used:");
+      Serial.println(lightning_interface);
+      Serial.println("Verify the hardware interface and SET it on the setup screen"); 
       Serial.println(); 
       tft.setTextColor(RED); 
       tft.print("ERROR");
-      delay(1000);
+      delay(3000);
   }
 
   
@@ -342,6 +349,21 @@ void setup(void)
   }
   Serial.println();
   
+  
+  // see if we do have a Real Time Clock running:
+  Time t = rtc.time();  
+  if (t.mon == 165) {
+    RTC_running = false;
+    Serial.println("No Real Time Clock available");
+  } else {
+    RTC_running = true;
+    Serial.print("Real Time Clock available. Date/time now: ");
+    char buf[20];
+    sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d", t.yr, t.mon, t.date, t.hr, t.min, t.sec);
+    Serial.println(buf);
+    Serial.println("");
+  }
+
   
   /* --- end of boot, wait 2 secs & set interrupt state, then show info screen --- */
   delay(2000);
